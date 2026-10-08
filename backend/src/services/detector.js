@@ -13,6 +13,10 @@ const aircraftState = new Map();
 
 export function processAirportSnapshot(airport, aircraftList) {
   const now = Date.now();
+  const airportIcao = (
+    typeof airport === "string" ? airport : airport?.icao || ""
+  ).toUpperCase();
+  const detectedEvents = [];
 
   for (const aircraft of aircraftList) {
     if (!aircraft || !aircraft.hex) continue;
@@ -24,7 +28,7 @@ export function processAirportSnapshot(airport, aircraftList) {
       state = {
         hex,
         lastSeen: now,
-        lastAirport: airport.icao,
+        lastAirport: airportIcao,
         consecutiveApproachCount: 0,
         lastLandEventAt: 0,
         lastTakeoffEventAt: 0,
@@ -36,7 +40,7 @@ export function processAirportSnapshot(airport, aircraftList) {
 
     const timeSinceLastSeen = now - state.lastSeen;
     state.lastSeen = now;
-    state.lastAirport = airport.icao;
+    state.lastAirport = airportIcao;
 
     // 1. Landing Detection: 2 consecutive approach phases with 3h cooldown
     if (aircraft.phase === "approach") {
@@ -46,12 +50,14 @@ export function processAirportSnapshot(airport, aircraftList) {
         now - state.lastLandEventAt > LAND_COOLDOWN_MS
       ) {
         state.lastLandEventAt = now;
-        matchAndNotify({
+        const event = {
           type: "land",
-          airport: airport.icao,
+          airport: airportIcao,
           aircraft,
           timestamp: new Date().toISOString(),
-        });
+        };
+        detectedEvents.push(event);
+        matchAndNotify(event);
       }
     } else if (
       aircraft.phase === "climbing" ||
@@ -75,12 +81,14 @@ export function processAirportSnapshot(airport, aircraftList) {
     ) {
       state.lastTakeoffEventAt = now;
       state.wasStationaryOnGround = false;
-      matchAndNotify({
+      const event = {
         type: "takeoff",
-        airport: airport.icao,
+        airport: airportIcao,
         aircraft,
         timestamp: new Date().toISOString(),
-      });
+      };
+      detectedEvents.push(event);
+      matchAndNotify(event);
     } else if (
       isNearAirport &&
       isGroundPhase &&
@@ -97,16 +105,19 @@ export function processAirportSnapshot(airport, aircraftList) {
 
     if (isNewArrival || isReturningAfterAbsence) {
       state.lastNearbyEventAt = now;
-      matchAndNotify({
+      const event = {
         type: "nearby",
-        airport: airport.icao,
+        airport: airportIcao,
         aircraft,
         timestamp: new Date().toISOString(),
-      });
+      };
+      detectedEvents.push(event);
+      matchAndNotify(event);
     }
   }
 
   pruneStaleState(now);
+  return detectedEvents;
 }
 
 function pruneStaleState(now) {
