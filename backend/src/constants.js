@@ -165,6 +165,7 @@ export const AIRCRAFT_TYPES = {
     "MRF1",
     "SU27",
     "SU35",
+    "F5",
   ]),
 
   // VIP / Business jets
@@ -208,6 +209,8 @@ export const LIMITS = {
   MAX_RADIUS_NM: 100,
   DEFAULT_RADIUS_NM: 40,
   ADSB_CACHE_TTL_MS: 10000,
+  MAX_STALE_MS: 120000,
+  MAX_POSITION_AGE_SEC: 60,
   FETCH_TIMEOUT_MS: 10000,
   MAX_USER_SUBSCRIPTIONS: 10,
   MAX_TOTAL_USERS: 200,

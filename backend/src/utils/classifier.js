@@ -56,18 +56,20 @@ export function determinePhase({
     return "ground";
   }
 
+  const heightFt = altFt !== null ? altFt - airportElevationFt : null;
+
   const isHighApproach =
     distKm !== null &&
     distKm <= PHASE_THRESHOLDS.APPROACH_MAX_DIST_KM &&
-    altFt !== null &&
-    altFt < PHASE_THRESHOLDS.APPROACH_ALT_FT &&
+    heightFt !== null &&
+    heightFt < PHASE_THRESHOLDS.APPROACH_ALT_FT &&
     vRate <= PHASE_THRESHOLDS.APPROACH_VRATE_FPM;
 
   const isCloseApproach =
     distKm !== null &&
     distKm < PHASE_THRESHOLDS.CLOSE_APPROACH_DIST_KM &&
-    altFt !== null &&
-    altFt < PHASE_THRESHOLDS.CLOSE_APPROACH_ALT_FT &&
+    heightFt !== null &&
+    heightFt < PHASE_THRESHOLDS.CLOSE_APPROACH_ALT_FT &&
     vRate <= PHASE_THRESHOLDS.CLOSE_APPROACH_VRATE_FPM;
 
   if (isHighApproach || isCloseApproach) {
@@ -77,8 +79,8 @@ export function determinePhase({
   if (
     distKm !== null &&
     distKm <= PHASE_THRESHOLDS.DEPARTING_DIST_KM &&
-    altFt !== null &&
-    altFt <= PHASE_THRESHOLDS.DEPARTING_ALT_FT &&
+    heightFt !== null &&
+    heightFt <= PHASE_THRESHOLDS.DEPARTING_ALT_FT &&
     vRate >= PHASE_THRESHOLDS.DEPARTING_VRATE_FPM
   ) {
     return "departing";
@@ -100,8 +102,9 @@ export function formatAircraft(raw, airport) {
   const type = typeof raw.t === "string" ? raw.t.trim().toUpperCase() : "";
   const reg = typeof raw.r === "string" ? raw.r.trim().toUpperCase() : "";
   const hex = typeof raw.hex === "string" ? raw.hex.trim().toLowerCase() : "";
-  const callsign =
+  const rawFlight =
     typeof raw.flight === "string" ? raw.flight.trim().toUpperCase() : "";
+  const callsign = /^[A-Z0-9]{1,8}$/.test(rawFlight) ? rawFlight : null;
   const operator = typeof raw.ownOp === "string" ? raw.ownOp.trim() : "";
   const model = typeof raw.desc === "string" ? raw.desc.trim() : null;
 
@@ -118,7 +121,11 @@ export function formatAircraft(raw, airport) {
 
   const speedKt = typeof raw.gs === "number" ? Math.round(raw.gs) : null;
   const vRate =
-    typeof raw.baro_rate === "number" ? Math.round(raw.baro_rate) : 0;
+    typeof raw.baro_rate === "number"
+      ? Math.round(raw.baro_rate)
+      : typeof raw.geom_rate === "number"
+        ? Math.round(raw.geom_rate)
+        : 0;
   const track = typeof raw.track === "number" ? Math.round(raw.track) : null;
   const lat = typeof raw.lat === "number" ? raw.lat : null;
   const lon = typeof raw.lon === "number" ? raw.lon : null;
@@ -130,7 +137,9 @@ export function formatAircraft(raw, airport) {
     airport?.lat !== undefined &&
     airport?.lon !== undefined
   ) {
-    distKm = calculateDistanceKm(airport.lat, airport.lon, lat, lon);
+    distKm =
+      Math.round(calculateDistanceKm(airport.lat, airport.lon, lat, lon) * 10) /
+      10;
   }
 
   const isMilitary = typeof raw.dbFlags === "number" && (raw.dbFlags & 1) === 1;
@@ -146,7 +155,7 @@ export function formatAircraft(raw, airport) {
 
   return {
     hex,
-    callsign: callsign || null,
+    callsign,
     reg: reg || null,
     type: type || null,
     model,

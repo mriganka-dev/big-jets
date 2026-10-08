@@ -40,24 +40,27 @@ export async function fetchAircraftForAirport(
     const json = await res.json();
 
     if (!json || typeof json !== "object" || !Array.isArray(json.ac)) {
-      logger.warn(
+      throw new Error(
         `Invalid response structure from ADS-B API for ${airport.icao}`
       );
-      return cached ? cached.data : [];
     }
 
     const aircraftList = [];
     for (const raw of json.ac) {
-      if (!raw || typeof raw !== "object" || !raw.hex) {
+      if (
+        !raw ||
+        typeof raw !== "object" ||
+        !raw.hex ||
+        typeof raw.lat !== "number" ||
+        typeof raw.lon !== "number" ||
+        (typeof raw.category === "string" && raw.category.startsWith("C")) ||
+        raw.type === "adsb_icao_nt" ||
+        (typeof raw.seen_pos === "number" &&
+          raw.seen_pos > LIMITS.MAX_POSITION_AGE_SEC)
+      ) {
         continue;
       }
-      try {
-        const formatted = formatAircraft(raw, airport);
-        aircraftList.push(formatted);
-      } catch (err) {
-        // Skip malformed individual records safely
-        logger.debug(`Skipping unparsable aircraft record: ${err.message}`);
-      }
+      aircraftList.push(formatAircraft(raw, airport));
     }
 
     cache.set(cacheKey, { timestamp: now, data: aircraftList });
@@ -66,7 +69,7 @@ export async function fetchAircraftForAirport(
     logger.error(
       `Failed to fetch ADS-B data for ${airport.icao}: ${err.message}`
     );
-    if (cached) {
+    if (cached && now - cached.timestamp < LIMITS.MAX_STALE_MS) {
       return cached.data;
     }
     throw new Error("ADS-B data provider is temporarily unavailable");

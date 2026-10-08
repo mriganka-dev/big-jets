@@ -23,12 +23,14 @@ export const radiusSchema = z.coerce
 
 export const categoryQuerySchema = z
   .string()
+  .max(100)
   .optional()
   .refine(
     (val) => {
       if (!val) return true;
       const parts = val.split(",").map((s) => s.trim().toUpperCase());
-      if (parts.length > 6) return false;
+      const unique = new Set(parts);
+      if (unique.size > 6) return false;
       return parts.every((cat) => validCategories.includes(cat));
     },
     {
@@ -37,7 +39,7 @@ export const categoryQuerySchema = z
   )
   .transform((val) => {
     if (!val) return [];
-    return val.split(",").map((s) => s.trim().toUpperCase());
+    return [...new Set(val.split(",").map((s) => s.trim().toUpperCase()))];
   });
 
 export const booleanStringSchema = z
@@ -63,6 +65,7 @@ export const registrationSchema = z
 
 export const emailSchema = z
   .string()
+  .trim()
   .max(254, "Email too long")
   .email("Invalid email format")
   .refine(
@@ -77,13 +80,7 @@ export const hexTokenSchema = z
 
 // Public aircraft query validator
 export const airportAircraftQuerySchema = z.object({
-  radius: z
-    .string()
-    .optional()
-    .transform((val) =>
-      val !== undefined ? Number(val) : LIMITS.DEFAULT_RADIUS_NM
-    )
-    .pipe(radiusSchema),
+  radius: radiusSchema,
   category: categoryQuerySchema,
   all: booleanStringSchema,
 });
