@@ -18,6 +18,7 @@ import {
   registrationSchema,
   emailSchema,
 } from "../utils/validators.js";
+import { sendVerificationEmail } from "./email.js";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 const MAX_MSG_LENGTH = 200;
@@ -501,6 +502,25 @@ async function handleResumeCommand(chatId, user) {
   );
 }
 
+const emailVerificationRateMap = new Map();
+const MAX_VERIFICATIONS_PER_DAY = 3;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function canRequestVerification(userId) {
+  const now = Date.now();
+  const timestamps = emailVerificationRateMap.get(userId) || [];
+  const validTimestamps = timestamps.filter((t) => now - t < ONE_DAY_MS);
+
+  if (validTimestamps.length >= MAX_VERIFICATIONS_PER_DAY) {
+    emailVerificationRateMap.set(userId, validTimestamps);
+    return false;
+  }
+
+  validTimestamps.push(now);
+  emailVerificationRateMap.set(userId, validTimestamps);
+  return true;
+}
+
 async function handleEmailCommand(chatId, user, args) {
   if (args.length === 0) {
     await sendMessage(
@@ -529,6 +549,14 @@ async function handleEmailCommand(chatId, user, args) {
     return;
   }
 
+  if (!canRequestVerification(user.id)) {
+    await sendMessage(
+      chatId,
+      "You have reached the limit of 3 email verification requests per day. Please check your inbox or try again tomorrow."
+    );
+    return;
+  }
+
   const email = emailResult.data;
   setUserEmail(user.id, email);
 
@@ -538,15 +566,34 @@ async function handleEmailCommand(chatId, user, args) {
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
   saveEmailToken(user.id, tokenHash, expiresAt);
 
-  const verifyUrl = `${config.publicUrl}/api/email/verify?token=${rawToken}`;
+  const verifyUrl = `${config.publicUrl}/api/email/verify?token=${encodeURIComponent(rawToken)}`;
 
-  await sendMessage(
-    chatId,
-    `Email set to <code>${escapeHtml(email)}</code>.\n\n` +
-      `Verification link generated (valid for 24h):\n` +
-      `<a href="${verifyUrl}">${verifyUrl}</a>\n\n` +
-      `<i>Click the link above to verify your email address.</i>`
-  );
+  try {
+    await sendVerificationEmail(email, rawToken);
+
+    if (config.smtp.isEnabled) {
+      await sendMessage(
+        chatId,
+        `Email set to <code>${escapeHtml(email)}</code>.\n\n` +
+          `A verification link has been sent to your email address (valid for 24h). ` +
+          `Please click the link to activate email alerts.`
+      );
+    } else {
+      // In local dev without SMTP configured, include the direct link for easy testing
+      await sendMessage(
+        chatId,
+        `Email set to <code>${escapeHtml(email)}</code>.\n\n` +
+          `<i>(SMTP not configured)</i> Verification link (valid 24h):\n` +
+          `<a href="${verifyUrl}">${verifyUrl}</a>`
+      );
+    }
+  } catch (err) {
+    logger.error(`Failed to dispatch verification email: ${err.message}`);
+    await sendMessage(
+      chatId,
+      "Failed to send verification email. Please check the address or try again later."
+    );
+  }
 }
 
 /**

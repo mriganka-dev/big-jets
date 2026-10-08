@@ -1,5 +1,11 @@
 import { escapeHtml, sendMessage } from "./telegram.js";
-import { recordAlert, wasAlertSent } from "../store/store.js";
+import { sendAlertEmail } from "./email.js";
+import {
+  recordAlert,
+  wasAlertSent,
+  saveEmailToken,
+} from "../store/store.js";
+import { generateToken, hashToken } from "../utils/tokens.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -116,7 +122,7 @@ export async function notify(sub, user, event) {
     }
   }
 
-  // 2. Deliver via Email if subscribed (full email sending enabled in Phase 6)
+  // 2. Deliver via Email if subscribed
   if (sub.channel === "email" || sub.channel === "both") {
     const alreadySentEmail = wasAlertSent({
       userId: user.id,
@@ -133,10 +139,31 @@ export async function notify(sub, user, event) {
       !user.emailBounced &&
       !user.emailUnsubscribed
     ) {
-      // Email delivery hook for Phase 6
-      logger.info(
-        `[Notifier] Email alert queued for verified address (...${user.email.slice(-6)}) for ${aircraft.type || hex}`
-      );
+      try {
+        const rawUnsubToken = generateToken();
+        const unsubTokenHash = hashToken(rawUnsubToken);
+        const unsubExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        saveEmailToken(user.id, unsubTokenHash, unsubExpiresAt);
+
+        const sent = await sendAlertEmail(user, event, rawUnsubToken);
+        if (sent) {
+          recordAlert({
+            userId: user.id,
+            hex,
+            event: eventType,
+            airport,
+            channel: "email",
+          });
+          logger.info(
+            `[Notifier] Sent Email alert to user ...${user.email.slice(-6)} for ${aircraft.type || hex} (${eventType} @ ${airport})`
+          );
+        }
+      } catch (err) {
+        logger.error(
+          `[Notifier] Failed to send Email alert to user ...${user.email ? user.email.slice(-6) : "unknown"}: ${err.message}`
+        );
+      }
     }
   }
 }
+
