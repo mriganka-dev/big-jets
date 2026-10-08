@@ -55,4 +55,3 @@ app.use("/api", emailRoutes);
 // Catch 404 and forward to error handler
 app.use(notFound);
 app.use(errorHandler);
-

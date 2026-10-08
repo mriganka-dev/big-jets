@@ -6,8 +6,8 @@ import { LIMITS } from "../constants.js";
 import { logger } from "../utils/logger.js";
 import { compareHashes } from "../utils/tokens.js";
 
-const STORE_FILE_PATH = path.resolve(config.storePath);
-const STORE_DIR = path.dirname(STORE_FILE_PATH);
+let storeFilePath = path.resolve(config.storePath);
+let storeDir = path.dirname(storeFilePath);
 const DEBOUNCE_DELAY_MS = 1000;
 const ALERT_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const PRUNE_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
@@ -33,15 +33,15 @@ function clone(data) {
 
 function loadStore() {
   try {
-    fs.mkdirSync(STORE_DIR, { recursive: true });
+    fs.mkdirSync(storeDir, { recursive: true });
 
-    if (!fs.existsSync(STORE_FILE_PATH)) {
+    if (!fs.existsSync(storeFilePath)) {
       store = createEmptyStore();
       writeStoreAtomic(store);
       return;
     }
 
-    const fileContent = fs.readFileSync(STORE_FILE_PATH, "utf8");
+    const fileContent = fs.readFileSync(storeFilePath, "utf8");
     const parsed = JSON.parse(fileContent);
 
     if (
@@ -58,15 +58,15 @@ function loadStore() {
     store = parsed;
   } catch (err) {
     const timestamp = Date.now();
-    const corruptPath = `${STORE_FILE_PATH}.corrupt-${timestamp}`;
+    const corruptPath = `${storeFilePath}.corrupt-${timestamp}`;
 
     logger.error(
       `Store file was corrupt or unreadable (${err.message}). Renaming to ${corruptPath} and initializing empty store.`
     );
 
     try {
-      if (fs.existsSync(STORE_FILE_PATH)) {
-        fs.renameSync(STORE_FILE_PATH, corruptPath);
+      if (fs.existsSync(storeFilePath)) {
+        fs.renameSync(storeFilePath, corruptPath);
       }
     } catch (renameErr) {
       logger.error(`Failed to rename corrupted store: ${renameErr.message}`);
@@ -78,11 +78,11 @@ function loadStore() {
 }
 
 function writeStoreAtomic(data) {
-  const tmpPath = `${STORE_FILE_PATH}.tmp`;
+  const tmpPath = `${storeFilePath}.tmp`;
   const jsonContent = JSON.stringify(data, null, 2);
 
   fs.writeFileSync(tmpPath, jsonContent, "utf8");
-  fs.renameSync(tmpPath, STORE_FILE_PATH);
+  fs.renameSync(tmpPath, storeFilePath);
 }
 
 function scheduleSave() {
@@ -395,7 +395,11 @@ export function pruneOldData() {
   return { prunedAlerts, prunedTokens };
 }
 
-export function _resetStoreForTesting() {
-  store = createEmptyStore();
-  saveNow();
+export function setStorePath(newPath) {
+  if (saveTimer) {
+    saveNow();
+  }
+  storeFilePath = path.resolve(newPath);
+  storeDir = path.dirname(storeFilePath);
+  loadStore();
 }

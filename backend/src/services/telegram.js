@@ -237,7 +237,9 @@ export async function handleUpdate(update) {
         break;
     }
   } catch (err) {
-    logger.error(`Error handling telegram command '${command}': ${err.message}`);
+    logger.error(
+      `Error handling telegram command '${command}': ${err.message}`
+    );
     await sendMessage(
       chatId,
       "An error occurred while processing your request."
@@ -385,7 +387,7 @@ async function handleWatchCommand(chatId, user, args) {
       filterType,
       filterValue,
       event,
-      radiusKm: event === "nearby" ? (radiusKm || 50) : null,
+      radiusKm: event === "nearby" ? radiusKm || 50 : null,
       channel,
     });
 
@@ -410,7 +412,10 @@ async function handleWatchCommand(chatId, user, args) {
         `Via: <b>${channel}</b>`
     );
   } catch (err) {
-    await sendMessage(chatId, `Failed to create watch: ${escapeHtml(err.message)}`);
+    await sendMessage(
+      chatId,
+      `Failed to create watch: ${escapeHtml(err.message)}`
+    );
   }
 }
 
@@ -448,7 +453,9 @@ async function handleMyWatchesCommand(chatId, user) {
   });
 
   lines.push("");
-  lines.push("<i>To remove a watch, send <code>/stop &lt;number&gt;</code>.</i>");
+  lines.push(
+    "<i>To remove a watch, send <code>/stop &lt;number&gt;</code>.</i>"
+  );
 
   await sendMessage(chatId, lines.join("\n"));
 }
@@ -646,9 +653,7 @@ async function runPollingLoop() {
  */
 export async function registerWebhook() {
   if (!config.telegram.botToken || !config.telegram.webhookSecret) {
-    logger.warn(
-      "Cannot register webhook: bot token or webhook secret missing"
-    );
+    logger.warn("Cannot register webhook: bot token or webhook secret missing");
     return false;
   }
 

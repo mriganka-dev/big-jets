@@ -34,7 +34,6 @@ export function gracefulShutdown(signal) {
   // Ensure store data is flushed to disk
   saveNow();
 
-
   server.close((err) => {
     if (err) {
       logger.error("Error while closing HTTP server", err.message);

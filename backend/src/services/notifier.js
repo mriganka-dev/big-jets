@@ -1,10 +1,6 @@
 import { escapeHtml, sendMessage } from "./telegram.js";
 import { sendAlertEmail } from "./email.js";
-import {
-  recordAlert,
-  wasAlertSent,
-  saveEmailToken,
-} from "../store/store.js";
+import { recordAlert, wasAlertSent, saveEmailToken } from "../store/store.js";
 import { generateToken, hashToken } from "../utils/tokens.js";
 import { logger } from "../utils/logger.js";
 
@@ -166,4 +162,3 @@ export async function notify(sub, user, event) {
     }
   }
 }
-
