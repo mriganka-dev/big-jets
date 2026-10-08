@@ -394,3 +394,8 @@ export function pruneOldData() {
 
   return { prunedAlerts, prunedTokens };
 }
+
+export function _resetStoreForTesting() {
+  store = createEmptyStore();
+  saveNow();
+}

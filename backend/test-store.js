@@ -10,7 +10,9 @@ async function runTests() {
 
   const storePath = path.resolve(config.storePath);
 
-  // 1. User operations
+  // Initialize clean test store
+  store._resetStoreForTesting();
+
   console.log("1. Testing User Operations...");
   const user1 = store.createUser({ telegramChatId: "123456" });
   assert(user1.id.startsWith("u_"), "User ID should have prefix u_");
@@ -157,11 +159,7 @@ async function runTests() {
   // Expired token test
   const expiredRawToken = generateToken();
   const expiredHash = hashToken(expiredRawToken);
-  store.saveEmailToken(
-    user1.id,
-    expiredHash,
-    new Date(Date.now() - 1000)
-  );
+  store.saveEmailToken(user1.id, expiredHash, new Date(Date.now() - 1000));
   const consumedExpired = store.consumeEmailToken(expiredHash);
   assert.strictEqual(consumedExpired, null);
 
@@ -177,7 +175,9 @@ async function runTests() {
   assert(fs.existsSync(storePath), "store.json must exist on disk");
   const diskData = JSON.parse(fs.readFileSync(storePath, "utf8"));
   assert(Array.isArray(diskData.users) && diskData.users.length > 0);
-  assert(Array.isArray(diskData.subscriptions) && diskData.subscriptions.length > 0);
+  assert(
+    Array.isArray(diskData.subscriptions) && diskData.subscriptions.length > 0
+  );
 
   console.log("All Store Tests PASSED successfully!");
 }
