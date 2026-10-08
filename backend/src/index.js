@@ -3,10 +3,15 @@ import { config } from "./config.js";
 import { logger } from "./utils/logger.js";
 import { saveNow } from "./store/store.js";
 import { startPoller, stopPoller } from "./services/poller.js";
+import {
+  startTelegramService,
+  stopTelegramService,
+} from "./services/telegram.js";
 
 const server = app.listen(config.port, () => {
   logger.info(`Big Jets server running on port ${config.port} (${config.env})`);
   startPoller();
+  startTelegramService();
 });
 
 // Protect against slowloris and stalled connections
@@ -22,11 +27,13 @@ export function gracefulShutdown(signal) {
 
   logger.info(`Received ${signal}, shutting down gracefully...`);
 
-  // Stop background poller
+  // Stop background poller and telegram polling loop
   stopPoller();
+  stopTelegramService();
 
   // Ensure store data is flushed to disk
   saveNow();
+
 
   server.close((err) => {
     if (err) {

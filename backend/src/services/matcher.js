@@ -4,7 +4,7 @@ import {
   wasAlertSent,
 } from "../store/store.js";
 import { CATEGORIES, AIRCRAFT_TYPES } from "../constants.js";
-import { logger } from "../utils/logger.js";
+import { notify } from "./notifier.js";
 
 export function matchAndNotify(event) {
   const { airport, aircraft, type: eventType } = event;
@@ -50,23 +50,8 @@ export function matchAndNotify(event) {
 
     matchedList.push({ sub, user, event });
 
-    // Log the match (real notification delivery is wired in Phase 5 & 6)
-    const maskedUser = user.telegramChatId
-      ? `...${user.telegramChatId.slice(-4)}`
-      : `...${user.id.slice(-4)}`;
-
-    const aircraftDesc =
-      aircraft.type || aircraft.callsign || aircraft.reg || aircraft.hex;
-    const actionDesc =
-      eventType === "land"
-        ? `landing at ${airport}`
-        : eventType === "takeoff"
-          ? `taking off from ${airport}`
-          : `near ${airport} (${aircraft.distKm ?? "?"} km)`;
-
-    logger.info(
-      `[Matcher] Would alert user ${maskedUser} about ${aircraftDesc} ${actionDesc} via ${sub.channel}`
-    );
+    // Dispatch notification to user across subscribed channels
+    notify(sub, user, event).catch(() => {});
   }
 
   return matchedList;
