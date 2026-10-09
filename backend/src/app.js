@@ -4,6 +4,8 @@ import cors from "cors";
 import { config } from "./config.js";
 import { healthRoutes } from "./routes/healthRoutes.js";
 import { airportRoutes } from "./routes/airportRoutes.js";
+import { telegramRoutes } from "./routes/telegramRoutes.js";
+import { emailRoutes } from "./routes/emailRoutes.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
@@ -47,6 +49,8 @@ app.use(express.json({ limit: "10kb" }));
 // API routes
 app.use("/api", healthRoutes);
 app.use("/api", airportRoutes);
+app.use("/api", telegramRoutes);
+app.use("/api", emailRoutes);
 
 // Catch 404 and forward to error handler
 app.use(notFound);
