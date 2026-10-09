@@ -2,6 +2,19 @@ import { AIRPORTS } from "../constants.js";
 import { fetchAircraftForAirport } from "../utils/adsb.js";
 import { icaoSchema, airportAircraftQuerySchema } from "../utils/validators.js";
 
+export function getAirports(req, res) {
+  const airports = Object.values(AIRPORTS).map((airport) => ({
+    icao: airport.icao,
+    iata: airport.iata,
+    name: airport.name,
+    fullName: airport.fullName,
+    lat: airport.lat,
+    lon: airport.lon,
+  }));
+
+  res.json({ airports });
+}
+
 export async function getAirportAircraft(req, res, next) {
   try {
     const icaoParse = icaoSchema.safeParse(req.params.icao);

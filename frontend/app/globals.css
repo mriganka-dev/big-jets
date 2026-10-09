@@ -1,26 +1,305 @@
-@import "tailwindcss";
+/* Global CSS Design System - Big Jets Alert */
+/* Information-first airport arrivals board theme */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Color Palette - Light Mode */
+  --bg-page: #f6f8fa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f4f8;
+  --bg-subtle: #eaeef2;
+  --bg-input: #ffffff;
+  
+  --text-primary: #171d25;
+  --text-secondary: #52606d;
+  --text-muted: #798794;
+  --text-inverse: #ffffff;
+  
+  --border-subtle: #dbe2e8;
+  --border-strong: #9aa7b2;
+  --focus-ring: #005fb8;
+  
+  /* Category Colors - Light Mode (High Contrast) */
+  --badge-rare-bg: #4a0d66;
+  --badge-rare-text: #ffffff;
+  --badge-fighter-bg: #8b1a1a;
+  --badge-fighter-text: #ffffff;
+  --badge-big-bg: #113f67;
+  --badge-big-text: #ffffff;
+  --badge-vip-bg: #634d00;
+  --badge-vip-text: #ffffff;
+  --badge-military-bg: #2d4a22;
+  --badge-military-text: #ffffff;
+  --badge-watched-bg: #004d40;
+  --badge-watched-text: #ffffff;
+  
+  /* Status Colors */
+  --status-live-bg: #e6f4ea;
+  --status-live-text: #137333;
+  --status-stale-bg: #fef7e0;
+  --status-stale-text: #b06000;
+  --status-error-bg: #fce8e6;
+  --status-error-text: #c5221f;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Typography */
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  
+  /* Spacing and Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+  --max-width: 900px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Color Palette - Dark Mode (Arrivals Board) */
+    --bg-page: #0b0f14;
+    --bg-card: #131922;
+    --bg-card-hover: #1a222e;
+    --bg-subtle: #1e2836;
+    --bg-input: #17202c;
+    
+    --text-primary: #f0f4f8;
+    --text-secondary: #a0aec0;
+    --text-muted: #718096;
+    --text-inverse: #0b0f14;
+    
+    --border-subtle: #243242;
+    --border-strong: #4a5d73;
+    --focus-ring: #4da3ff;
+    
+    /* Category Colors - Dark Mode */
+    --badge-rare-bg: #e066ff;
+    --badge-rare-text: #1a0026;
+    --badge-fighter-bg: #ff6b6b;
+    --badge-fighter-text: #2a0000;
+    --badge-big-bg: #63b3ed;
+    --badge-big-text: #05233d;
+    --badge-vip-bg: #ffd166;
+    --badge-vip-text: #332600;
+    --badge-military-bg: #81c784;
+    --badge-military-text: #0d290f;
+    --badge-watched-bg: #4db6ac;
+    --badge-watched-text: #002924;
+    
+    /* Status Colors */
+    --status-live-bg: #0d2b18;
+    --status-live-text: #81c995;
+    --status-stale-bg: #332200;
+    --status-stale-text: #fdd663;
+    --status-error-bg: #330b0b;
+    --status-error-text: #f28b82;
   }
 }
 
+/* Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-system);
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Accessibility: Skip Link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  z-index: 1000;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Tabular numbers for live telemetry data */
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Layout Container */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+  outline: none;
+}
+
+/* Navigation & Header */
+.site-header {
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-card);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
+}
+
+.site-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-title:hover {
+  text-decoration: underline;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-card);
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+  margin-top: auto;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+}
+
+/* Common UI Elements */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.btn:hover {
+  background-color: var(--bg-subtle);
+}
+
+.btn-primary {
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Category Badge Base */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.4375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+}
+
+.badge-rare { background: var(--badge-rare-bg); color: var(--badge-rare-text); }
+.badge-fighter { background: var(--badge-fighter-bg); color: var(--badge-fighter-text); }
+.badge-big { background: var(--badge-big-bg); color: var(--badge-big-text); }
+.badge-vip { background: var(--badge-vip-bg); color: var(--badge-vip-text); }
+.badge-military { background: var(--badge-military-bg); color: var(--badge-military-text); }
+.badge-watched { background: var(--badge-watched-bg); color: var(--badge-watched-text); }
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
