@@ -257,7 +257,7 @@ body {
   color: var(--text-primary);
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn:hover {
@@ -272,6 +272,11 @@ body {
 
 .btn-primary:hover {
   opacity: 0.9;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
 }
 
 /* Category Badge Base */
@@ -294,6 +299,1000 @@ body {
 .badge-military { background: var(--badge-military-bg); color: var(--badge-military-text); }
 .badge-watched { background: var(--badge-watched-bg); color: var(--badge-watched-text); }
 
+/* Home Page & Airport Picker Styles */
+.home-intro {
+  margin-bottom: 2rem;
+}
+
+.home-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.home-description {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.airport-picker-section {
+  margin-top: 1.5rem;
+}
+
+.search-box {
+  margin-bottom: 1.25rem;
+}
+
+.search-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.search-input:focus {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.search-clear-btn:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.airport-results-header {
+  margin-bottom: 0.875rem;
+}
+
+.results-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.airport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  list-style: none;
+}
+
+.airport-item {
+  display: flex;
+}
+
+.airport-card-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.airport-card-link:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.airport-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.airport-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.airport-codes {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.code-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.code-icao {
+  color: var(--text-primary);
+}
+
+.code-iata {
+  color: var(--text-secondary);
+}
+
+.airport-fullname {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  flex-grow: 1;
+}
+
+.view-board-hint {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.empty-results-box {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.alert-box {
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.alert-error {
+  background-color: var(--status-error-bg);
+  color: var(--status-error-text);
+  border: 1px solid var(--status-error-text);
+}
+
+/* Airport Page Header & Breadcrumbs */
+.breadcrumb-nav {
+  margin-bottom: 1rem;
+}
+
+.breadcrumb-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.breadcrumb-link:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.airport-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.airport-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.airport-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.airport-header-badges {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.airport-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+}
+
+.airport-telemetry-meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Board Toolbar & Map Toggle */
+.board-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.board-view-toggle {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-toggle-map {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.btn-toggle-map:hover {
+  background-color: var(--bg-subtle);
+}
+
+.btn-map-active {
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
+}
+
+.btn-map-active:hover {
+  opacity: 0.9;
+}
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-chip:hover:not(:disabled) {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.filter-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.filter-chip-active {
+  background-color: var(--text-primary) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--text-primary) !important;
+}
+
+.filter-chip-toggle {
+  border-style: dashed;
+}
+
+.filter-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.radius-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.radius-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.radius-select {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.btn-reset-filters {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-reset-filters:hover {
+  color: var(--text-primary);
+}
+
+/* Status Line */
+.status-line-container {
+  margin-bottom: 1rem;
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-live {
+  background-color: #34a853;
+  box-shadow: 0 0 0 2px rgba(52, 168, 83, 0.2);
+}
+
+.status-separator {
+  color: var(--text-muted);
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.status-stale-badge {
+  background-color: var(--status-stale-bg);
+  color: var(--status-stale-text);
+  border: 1px solid var(--status-stale-text);
+}
+
+.status-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  margin-top: 0.5rem;
+  background-color: var(--status-error-bg);
+  color: var(--status-error-text);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+}
+
+.btn-retry {
+  border-color: currentColor;
+  background: transparent;
+  color: inherit;
+}
+
+/* Aircraft Rows Container & Row */
+.aircraft-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.aircraft-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease;
+}
+
+.aircraft-row:hover {
+  border-color: var(--border-strong);
+}
+
+@media (min-width: 640px) {
+  .aircraft-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.aircraft-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.aircraft-header-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.aircraft-callsign {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.aircraft-reg-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.aircraft-reg-link:hover {
+  color: var(--text-primary);
+}
+
+.aircraft-reg {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Flight Phase Tags */
+.phase-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+}
+
+.phase-approach {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.phase-ground {
+  background-color: #f1f3f4;
+  color: #3c4043;
+}
+
+.phase-departing {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.phase-descending {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+.phase-climbing {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+}
+
+.phase-enroute {
+  background-color: #f1f3f4;
+  color: #5f6368;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phase-approach { background-color: #0d2b18; color: #81c995; }
+  .phase-ground { background-color: #202124; color: #9aa0a6; }
+  .phase-departing { background-color: #0d2847; color: #8ab4f8; }
+  .phase-descending { background-color: #332200; color: #fdd663; }
+  .phase-climbing { background-color: #0d2847; color: #8ab4f8; }
+  .phase-enroute { background-color: #1e2836; color: #9aa7b2; }
+}
+
+.aircraft-identity-line {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.aircraft-typecode {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.aircraft-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+}
+
+/* Telemetry Column */
+.aircraft-telemetry-col {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .aircraft-telemetry-col {
+    border-top: none;
+    padding-top: 0;
+    gap: 1.5rem;
+  }
+}
+
+.telemetry-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.telemetry-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.telemetry-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.telemetry-sub {
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.trend-climbing {
+  color: #1a73e8;
+}
+
+.trend-descending {
+  color: #b06000;
+}
+
+.eta-badge {
+  color: #137333;
+}
+
+/* Loading & Empty States */
+.board-loading-box,
+.board-empty-box {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.empty-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-desc {
+  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Map Component Styling */
+.map-wrapper {
+  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-card);
+}
+
+.map-container {
+  height: 380px;
+  width: 100%;
+  z-index: 1;
+}
+
+.map-loading-placeholder {
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+}
+
+.map-notice {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--bg-subtle);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Leaflet Custom DivIcon Markers */
+.custom-map-icon {
+  background: transparent;
+  border: none;
+}
+
+.airport-pin-symbol {
+  width: 28px;
+  height: 28px;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  border: 2px solid #ffffff;
+}
+
+.aircraft-marker-symbol {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s linear;
+}
+
+.marker-symbol-rare {
+  color: #e066ff;
+  filter: drop-shadow(0 0 3px rgba(224, 102, 255, 0.8));
+}
+
+.marker-symbol-fighter {
+  color: #ff4d4d;
+  filter: drop-shadow(0 0 3px rgba(255, 77, 77, 0.8));
+}
+
+.marker-symbol-big {
+  color: #4da3ff;
+  filter: drop-shadow(0 0 3px rgba(77, 163, 255, 0.8));
+}
+
+.marker-symbol-default {
+  color: #a0aec0;
+}
+
+/* Map Popups */
+.leaflet-popup-content-wrapper {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-popup-tip {
+  background-color: var(--bg-card);
+}
+
+.map-popup-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.map-popup-header {
+  font-size: 0.9375rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.map-popup-reg {
+  font-weight: normal;
+  color: var(--text-secondary);
+}
+
+.map-popup-type,
+.map-popup-operator,
+.map-popup-phase {
+  color: var(--text-secondary);
+}
+
+.map-popup-telemetry {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+}
+
+.map-popup-photo-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Content Pages (Alerts, About) */
+.content-page {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.page-header {
+  margin-bottom: 0.5rem;
+}
+
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.page-lead {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.info-card {
+  padding: 1.5rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.875rem;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  color: var(--text-inverse);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.step-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.notice-banner {
+  padding: 0.875rem 1rem;
+  background-color: var(--bg-subtle);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.command-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.command-card {
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.command-header {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.375rem;
+}
+
+.command-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.command-examples {
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.command-examples li {
+  margin-bottom: 0.25rem;
+}
+
+.command-examples code,
+.step-item code,
+.notice-banner code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.disclaimer-callout {
+  padding: 1.25rem 1.5rem;
+  background-color: var(--status-error-bg);
+  border: 1px solid var(--status-error-text);
+  border-radius: var(--radius-md);
+}
+
+.disclaimer-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--status-error-text);
+  margin-bottom: 0.375rem;
+}
+
+.disclaimer-text {
+  font-size: 0.875rem;
+  color: var(--status-error-text);
+  line-height: 1.5;
+}
+
+.info-section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.info-section:last-of-type {
+  border-bottom: none;
+}
+
+.prose-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.info-bullets {
+  margin-top: 0.75rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -303,3 +1302,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
