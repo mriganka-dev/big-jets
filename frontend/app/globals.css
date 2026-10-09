@@ -40,16 +40,75 @@
   --status-error-bg: #fce8e6;
   --status-error-text: #c5221f;
 
-  /* Typography */
-  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Typography Tokens - DM Sans Design System */
+  --font-sans: var(--font-dm-sans), "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-system: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  
+
+  /* Font Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Desktop Typography Scale */
+  --text-h1: 3.5rem;       /* 56px */
+  --lh-h1: 1.15;
+  --text-h2: 2.5rem;       /* 40px */
+  --lh-h2: 1.2;
+  --text-h3: 1.75rem;      /* 28px */
+  --lh-h3: 1.25;
+  --text-h4: 1.5rem;       /* 24px */
+  --lh-h4: 1.3;
+  --text-h5: 1.25rem;      /* 20px */
+  --lh-h5: 1.35;
+  --text-h6: 1rem;         /* 16px */
+  --lh-h6: 1.4;
+
+  --text-body-1: 1rem;       /* 16px */
+  --lh-body-1: 1.6;
+  --text-body-2: 0.875rem;   /* 14px */
+  --lh-body-2: 1.5;
+
+  --text-label-1: 1rem;      /* 16px */
+  --lh-label-1: 1.4;
+  --text-label-2: 0.875rem;  /* 14px */
+  --lh-label-2: 1.4;
+
   /* Spacing and Radius */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-full: 9999px;
   --max-width: 900px;
+}
+
+/* Mobile Typography Scale (<= 640px) */
+@media (max-width: 640px) {
+  :root {
+    --text-h1: 2rem;        /* 32px */
+    --lh-h1: 1.2;
+    --text-h2: 1.5rem;      /* 24px */
+    --lh-h2: 1.25;
+    --text-h3: 1.25rem;     /* 20px */
+    --lh-h3: 1.3;
+    --text-h4: 1.125rem;    /* 18px */
+    --lh-h4: 1.35;
+    --text-h5: 1rem;        /* 16px */
+    --lh-h5: 1.4;
+    --text-h6: 0.875rem;    /* 14px */
+    --lh-h6: 1.4;
+
+    --text-body-1: 0.875rem; /* 14px */
+    --lh-body-1: 1.5;
+    --text-body-2: 0.75rem;  /* 12px */
+    --lh-body-2: 1.5;
+
+    --text-label-1: 0.875rem; /* 14px */
+    --lh-label-1: 1.4;
+    --text-label-2: 0.75rem;  /* 12px */
+    --lh-label-2: 1.4;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -102,10 +161,12 @@
 }
 
 html {
-  font-family: var(--font-system);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
   color: var(--text-primary);
   background-color: var(--bg-page);
-  line-height: 1.5;
+  line-height: var(--lh-body-2);
+  font-size: 16px;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -113,6 +174,11 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  color: var(--text-primary);
 }
 
 /* Accessibility: Skip Link */
@@ -165,6 +231,80 @@ body {
   outline: none;
 }
 
+/* Typography Utilities & Base Styles - DM Sans System */
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.02em;
+}
+
+h2, .h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.015em;
+}
+
+h3, .h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.01em;
+}
+
+h4, .h4 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h4);
+  line-height: var(--lh-h4);
+  font-weight: var(--weight-medium);
+}
+
+h5, .h5 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h5);
+  line-height: var(--lh-h5);
+  font-weight: var(--weight-medium);
+}
+
+h6, .h6 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h6);
+  line-height: var(--lh-h6);
+  font-weight: var(--weight-medium);
+}
+
+.body-1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-1);
+  line-height: var(--lh-body-1);
+  font-weight: var(--weight-regular);
+}
+
+.body-2, p {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
+}
+
+.label-1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
+}
+
+.label-2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
+}
+
 /* Navigation & Header */
 .site-header {
   border-bottom: 1px solid var(--border-subtle);
@@ -180,8 +320,9 @@ body {
 }
 
 .site-title {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: var(--text-h5);
+  line-height: var(--lh-h5);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   text-decoration: none;
   display: flex;
@@ -202,8 +343,9 @@ body {
 .nav-link {
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
 }
 
 .nav-link:hover {
@@ -218,7 +360,9 @@ body {
   padding-top: 1.5rem;
   padding-bottom: 2rem;
   margin-top: auto;
-  font-size: 0.8125rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
 }
 
@@ -249,8 +393,9 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background-color: var(--bg-card);
@@ -276,7 +421,9 @@ body {
 
 .btn-sm {
   padding: 0.25rem 0.625rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
 }
 
 /* Category Badge Base */
@@ -284,8 +431,8 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.4375rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-radius: var(--radius-sm);
@@ -305,17 +452,19 @@ body {
 }
 
 .home-title {
-  font-size: 1.875rem;
-  font-weight: 700;
+  font-size: var(--text-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--weight-medium);
   letter-spacing: -0.02em;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .home-description {
-  font-size: 1.0625rem;
+  font-size: var(--text-body-1);
+  line-height: var(--lh-body-1);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 .airport-picker-section {
@@ -328,8 +477,9 @@ body {
 
 .search-label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
   margin-bottom: 0.375rem;
 }
@@ -343,8 +493,9 @@ body {
 .search-input {
   width: 100%;
   padding: 0.625rem 0.875rem;
-  font-size: 0.9375rem;
+  font-size: var(--text-body-1);
   font-family: inherit;
+  font-weight: var(--weight-regular);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background-color: var(--bg-input);
@@ -360,8 +511,9 @@ body {
   position: absolute;
   right: 0.5rem;
   padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background-color: var(--bg-card);
@@ -379,7 +531,9 @@ body {
 }
 
 .results-count {
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
 }
 
@@ -422,8 +576,9 @@ body {
 }
 
 .airport-name {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: var(--text-h5);
+  line-height: var(--lh-h5);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
@@ -434,8 +589,9 @@ body {
 
 .code-badge {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
   background-color: var(--bg-subtle);
@@ -452,16 +608,18 @@ body {
 }
 
 .airport-fullname {
-  font-size: 0.8125rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.4;
   margin-bottom: 0.75rem;
   flex-grow: 1;
 }
 
 .view-board-hint {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
@@ -472,6 +630,7 @@ body {
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
+  font-size: var(--text-body-2);
 }
 
 .alert-box {
@@ -492,8 +651,9 @@ body {
 }
 
 .breadcrumb-link {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
   text-decoration: none;
 }
@@ -517,8 +677,9 @@ body {
 }
 
 .airport-title {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--text-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
@@ -528,13 +689,17 @@ body {
 }
 
 .airport-subtitle {
-  font-size: 0.9375rem;
+  font-size: var(--text-body-1);
+  line-height: var(--lh-body-1);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
   margin-bottom: 0.375rem;
 }
 
 .airport-telemetry-meta {
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
 }
 
@@ -555,8 +720,9 @@ body {
   background-color: var(--bg-card);
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   padding: 0.375rem 0.75rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -601,8 +767,9 @@ body {
 }
 
 .filter-group-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
 }
 
@@ -616,8 +783,9 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   border-radius: var(--radius-full);
   border: 1px solid var(--border-strong);
   background-color: var(--bg-input);
@@ -660,14 +828,18 @@ body {
 }
 
 .radius-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
 }
 
 .radius-select {
   padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
+  font-family: inherit;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background-color: var(--bg-input);
@@ -676,8 +848,9 @@ body {
 }
 
 .btn-reset-filters {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   background: none;
   border: none;
@@ -700,7 +873,9 @@ body {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
 }
 
@@ -727,8 +902,9 @@ body {
 }
 
 .status-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   padding: 0.125rem 0.5rem;
   border-radius: var(--radius-sm);
 }
@@ -748,7 +924,9 @@ body {
   background-color: var(--status-error-bg);
   color: var(--status-error-text);
   border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
 }
 
 .btn-retry {
@@ -801,14 +979,16 @@ body {
 }
 
 .aircraft-callsign {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: var(--text-h5);
+  line-height: var(--lh-h5);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
 .aircraft-reg-link {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
   text-decoration: underline;
 }
@@ -818,15 +998,16 @@ body {
 }
 
 .aircraft-reg {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-secondary);
 }
 
 /* Flight Phase Tags */
 .phase-tag {
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0.125rem 0.375rem;
@@ -874,7 +1055,9 @@ body {
 }
 
 .aircraft-identity-line {
-  font-size: 0.875rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
   display: flex;
   flex-wrap: wrap;
@@ -882,7 +1065,7 @@ body {
 }
 
 .aircraft-typecode {
-  font-weight: 700;
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
@@ -916,21 +1099,24 @@ body {
 }
 
 .telemetry-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .telemetry-value {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 
 .telemetry-sub {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: var(--weight-medium);
 }
 
 .trend-climbing {
@@ -954,22 +1140,28 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
+  font-size: var(--text-body-2);
 }
 
 .empty-title {
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: var(--text-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .empty-desc {
-  font-size: 0.9375rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   margin-bottom: 0.5rem;
 }
 
 .empty-hint {
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
 }
 
@@ -995,13 +1187,16 @@ body {
   justify-content: center;
   color: var(--text-secondary);
   background-color: var(--bg-card);
+  font-size: var(--text-body-1);
 }
 
 .map-notice {
   padding: 0.375rem 0.75rem;
   background-color: var(--bg-subtle);
   border-top: 1px solid var(--border-subtle);
-  font-size: 0.75rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-regular);
   color: var(--text-muted);
 }
 
@@ -1073,12 +1268,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.8125rem;
-  line-height: 1.35;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
 }
 
 .map-popup-header {
-  font-size: 0.9375rem;
+  font-size: var(--text-label-1);
+  line-height: var(--lh-label-1);
+  font-weight: var(--weight-medium);
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.25rem;
   margin-bottom: 0.25rem;
@@ -1096,8 +1294,9 @@ body {
 }
 
 .map-popup-telemetry {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   margin-top: 0.25rem;
 }
@@ -1105,8 +1304,9 @@ body {
 .map-popup-photo-link {
   color: var(--text-primary);
   text-decoration: underline;
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
   margin-top: 0.25rem;
 }
 
@@ -1125,17 +1325,19 @@ body {
 }
 
 .page-title {
-  font-size: 1.875rem;
-  font-weight: 700;
+  font-size: var(--text-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--weight-medium);
   letter-spacing: -0.02em;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .page-lead {
-  font-size: 1.0625rem;
+  font-size: var(--text-body-1);
+  line-height: var(--lh-body-1);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 .info-card {
@@ -1146,8 +1348,10 @@ body {
 }
 
 .section-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--text-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.015em;
   color: var(--text-primary);
   margin-bottom: 0.875rem;
 }
@@ -1164,6 +1368,8 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0.875rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
 }
 
 .step-number {
@@ -1175,14 +1381,16 @@ body {
   border-radius: 50%;
   background-color: var(--text-primary);
   color: var(--text-inverse);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: var(--text-label-2);
+  font-weight: var(--weight-medium);
   flex-shrink: 0;
   margin-top: 0.125rem;
 }
 
 .step-hint {
-  font-size: 0.8125rem;
+  font-size: var(--text-label-2);
+  line-height: var(--lh-label-2);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   margin-top: 0.25rem;
 }
@@ -1192,9 +1400,10 @@ body {
   background-color: var(--bg-subtle);
   border-left: 3px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.5;
 }
 
 .command-grid {
@@ -1213,22 +1422,26 @@ body {
 
 .command-header {
   font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: var(--text-h6);
+  line-height: var(--lh-h6);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   margin-bottom: 0.375rem;
 }
 
 .command-desc {
-  font-size: 0.875rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.5;
 }
 
 .command-examples {
   margin-top: 0.5rem;
   padding-left: 1.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
 }
 
@@ -1255,24 +1468,27 @@ body {
 }
 
 .disclaimer-title {
-  font-size: 1.0625rem;
-  font-weight: 700;
+  font-size: var(--text-h4);
+  line-height: var(--lh-h4);
+  font-weight: var(--weight-medium);
   color: var(--status-error-text);
   margin-bottom: 0.375rem;
 }
 
 .disclaimer-text {
-  font-size: 0.875rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--status-error-text);
-  line-height: 1.5;
 }
 
 .info-section {
   padding: 1.25rem 0;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 0.9375rem;
+  font-size: var(--text-body-2);
+  line-height: var(--lh-body-2);
+  font-weight: var(--weight-regular);
   color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 .info-section:last-of-type {
@@ -1282,7 +1498,7 @@ body {
 .prose-link {
   color: var(--text-primary);
   text-decoration: underline;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .info-bullets {

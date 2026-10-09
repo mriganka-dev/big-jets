@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { DM_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -19,8 +27,8 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={dmSans.variable}>
+      <body className={dmSans.className}>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
@@ -33,3 +41,4 @@ export default function RootLayout({
     </html>
   );
 }
+

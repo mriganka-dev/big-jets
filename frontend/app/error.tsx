@@ -10,11 +10,11 @@ export default function ErrorBoundary({
 }) {
   return (
     <div className="container">
-      <div style={{ maxWidth: "600px", margin: "2rem auto", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.75rem", marginBottom: "1rem" }}>
+      <div style={{ maxWidth: "600px", margin: "3rem auto", textAlign: "center" }}>
+        <h1 className="page-title" style={{ marginBottom: "1rem" }}>
           Something went wrong
         </h1>
-        <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+        <p className="page-lead" style={{ marginBottom: "1.5rem" }}>
           An unexpected error occurred while loading this page. You can try refreshing the data or go back to the airport list.
         </p>
         <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
@@ -33,3 +33,4 @@ export default function ErrorBoundary({
     </div>
   );
 }
+

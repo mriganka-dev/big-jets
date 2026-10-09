@@ -32,7 +32,7 @@ export default async function HomePage() {
 
       {fetchError ? (
         <div className="alert-box alert-error" role="alert">
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+          <h2 className="empty-title" style={{ color: "inherit", marginBottom: "0.5rem" }}>
             Data Service Unavailable
           </h2>
           <p style={{ marginBottom: "1rem" }}>{fetchError}</p>
