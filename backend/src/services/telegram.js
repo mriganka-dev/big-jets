@@ -164,6 +164,19 @@ export async function handleUpdate(update) {
     return;
   }
 
+  const chatId = String(message.chat.id);
+  const fromId = message.from?.id ? String(message.from.id) : chatId;
+
+  // 1. Access control allow-list check FIRST before length check and before any reply
+  const isAllowed = config.telegram.allowedUserIds.includes(fromId);
+  if (!isAllowed) {
+    const maskedChatId = chatId.length > 4 ? `...${chatId.slice(-4)}` : chatId;
+    logger.warn(
+      `Unauthorized Telegram access attempt from chat ${maskedChatId}`
+    );
+    return;
+  }
+
   const rawText = message.text.trim();
   if (rawText.length > MAX_MSG_LENGTH) {
     await sendMessage(
@@ -173,32 +186,17 @@ export async function handleUpdate(update) {
     return;
   }
 
-  const chatId = String(message.chat.id);
-  const fromId = message.from?.id ? String(message.from.id) : chatId;
-
-  // Access control allow-list check
-  if (config.telegram.allowedUserIds.length > 0) {
-    const isAllowed =
-      config.telegram.allowedUserIds.includes(chatId) ||
-      config.telegram.allowedUserIds.includes(fromId);
-
-    if (!isAllowed) {
-      // Ignored for unlisted users in private beta
-      return;
-    }
-  }
-
-  let user = findUserByTelegramId(chatId);
-  if (!user) {
-    user = createUser({ telegramChatId: chatId });
-  }
-
   const tokens = rawText.split(/\s+/);
   const rawCommand = tokens[0].toLowerCase();
   const command = rawCommand.split("@")[0]; // remove @botname suffix if present
   const args = tokens.slice(1);
 
   try {
+    let user = findUserByTelegramId(chatId);
+    if (!user) {
+      user = createUser({ telegramChatId: chatId });
+    }
+
     switch (command) {
       case "/start":
       case "/help":
@@ -571,7 +569,7 @@ async function handleEmailCommand(chatId, user, args) {
   const rawToken = generateToken();
   const tokenHash = hashToken(rawToken);
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  saveEmailToken(user.id, tokenHash, expiresAt);
+  saveEmailToken(user.id, tokenHash, expiresAt, "verify", email);
 
   const verifyUrl = `${config.publicUrl}/api/email/verify?token=${encodeURIComponent(rawToken)}`;
 
@@ -585,13 +583,18 @@ async function handleEmailCommand(chatId, user, args) {
           `A verification link has been sent to your email address (valid for 24h). ` +
           `Please click the link to activate email alerts.`
       );
-    } else {
+    } else if (config.env === "development") {
       // In local dev without SMTP configured, include the direct link for easy testing
       await sendMessage(
         chatId,
         `Email set to <code>${escapeHtml(email)}</code>.\n\n` +
-          `<i>(SMTP not configured)</i> Verification link (valid 24h):\n` +
-          `<a href="${verifyUrl}">${verifyUrl}</a>`
+          `<i>(Development mode - SMTP not configured)</i> Verification link (valid 24h):\n` +
+          `<a href="${escapeHtml(verifyUrl)}">${escapeHtml(verifyUrl)}</a>`
+      );
+    } else {
+      await sendMessage(
+        chatId,
+        `Email service is currently unavailable. Please contact the administrator.`
       );
     }
   } catch (err) {

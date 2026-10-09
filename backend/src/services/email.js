@@ -1,8 +1,20 @@
 import nodemailer from "nodemailer";
 import { config } from "../config.js";
 import { logger } from "../utils/logger.js";
-import { escapeHtml } from "./telegram.js";
 import { emailSchema } from "../utils/validators.js";
+
+/**
+ * Escapes HTML characters including quotes for safe HTML email bodies.
+ */
+export function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 let transporter = null;
 
@@ -16,6 +28,10 @@ function getTransporter() {
       host: config.smtp.host,
       port: config.smtp.port,
       secure: config.smtp.secure,
+      requireTLS: !config.smtp.secure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       auth:
         config.smtp.user && config.smtp.pass
           ? {
@@ -144,7 +160,7 @@ export function buildAlertEmailContent(event, rawUnsubToken) {
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
       <p style="font-size: 12px; color: #94a3b8; margin: 0; text-align: center;">
         You received this alert because you subscribed to aircraft alerts for ${escapeHtml(airport)}.<br>
-        <a href="${unsubUrl}" style="color: #64748b; text-decoration: underline;">Unsubscribe from email alerts</a>
+        <a href="${escapeHtml(unsubUrl)}" style="color: #64748b; text-decoration: underline;">Unsubscribe from email alerts</a>
       </p>
     </div>
   </div>
@@ -190,9 +206,9 @@ export async function sendVerificationEmail(toEmail, rawToken) {
     <h2 style="color: #0284c7; margin-top: 0;">Big Jets Alert</h2>
     <p>Please verify your email address to receive aircraft alert notifications.</p>
     <div style="margin: 24px 0;">
-      <a href="${verifyUrl}" style="background-color: #0284c7; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; display: inline-block;">Verify Email Address</a>
+      <a href="${escapeHtml(verifyUrl)}" style="background-color: #0284c7; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; display: inline-block;">Verify Email Address</a>
     </div>
-    <p style="font-size: 13px; color: #64748b;">Or copy and paste this link into your browser:<br><a href="${verifyUrl}" style="color: #0284c7;">${verifyUrl}</a></p>
+    <p style="font-size: 13px; color: #64748b;">Or copy and paste this link into your browser:<br><a href="${escapeHtml(verifyUrl)}" style="color: #0284c7;">${escapeHtml(verifyUrl)}</a></p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
     <p style="font-size: 12px; color: #94a3b8; margin: 0;">This link is valid for 24 hours. If you did not request this email, please ignore it.</p>
   </div>
@@ -202,10 +218,16 @@ export async function sendVerificationEmail(toEmail, rawToken) {
   const transport = getTransporter();
 
   if (!transport) {
-    logger.info(
-      `[Email] SMTP not configured. Verification email simulation for ...${cleanEmail.slice(-6)}: ${verifyUrl}`
+    if (config.env === "development") {
+      logger.info(
+        `[Email] SMTP not configured. Verification email simulation for ...${cleanEmail.slice(-6)}: ${verifyUrl}`
+      );
+      return true;
+    }
+    logger.warn(
+      `[Email] SMTP not configured. Cannot dispatch verification email for ...${cleanEmail.slice(-6)} in ${config.env} mode.`
     );
-    return true;
+    return false;
   }
 
   try {
@@ -256,10 +278,13 @@ export async function sendAlertEmail(user, event, rawUnsubToken) {
   const transport = getTransporter();
 
   if (!transport) {
-    logger.info(
-      `[Email] SMTP not configured. Alert email simulation for ...${cleanEmail.slice(-6)}: ${subject}`
-    );
-    return true;
+    if (config.env === "development") {
+      logger.info(
+        `[Email] SMTP not configured. Alert email simulation for ...${cleanEmail.slice(-6)}: ${subject}`
+      );
+      return true;
+    }
+    return false;
   }
 
   try {

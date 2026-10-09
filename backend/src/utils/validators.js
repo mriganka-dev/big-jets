@@ -7,7 +7,7 @@ export const icaoSchema = z
   .string()
   .regex(/^[A-Za-z]{4}$/, "ICAO must be exactly 4 letters")
   .transform((val) => val.toUpperCase())
-  .refine((val) => Boolean(AIRPORTS[val]), {
+  .refine((val) => Object.hasOwn(AIRPORTS, val), {
     message: "Unknown airport ICAO code",
   });
 

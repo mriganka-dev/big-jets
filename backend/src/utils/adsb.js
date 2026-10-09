@@ -30,6 +30,7 @@ export async function fetchAircraftForAirport(
         Accept: "application/json",
         "User-Agent": "BigJetsAlert/1.0",
       },
+      redirect: "error",
       signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
     });
 

@@ -26,3 +26,12 @@ export const telegramWebhookLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later." },
 });
+
+// Rate limiter for health check endpoint (120 req / min)
+export const healthLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
