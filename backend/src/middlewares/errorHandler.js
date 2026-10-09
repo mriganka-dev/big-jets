@@ -5,14 +5,11 @@ import { logger } from "../utils/logger.js";
 export function errorHandler(err, req, res, _next) {
   const statusCode = err.statusCode || err.status || 500;
 
-  // Log the real error on the server without request body or secrets
-  logger.error(
-    `${req.method} ${req.originalUrl || req.url} failed: ${err.message}`,
-    {
-      statusCode,
-      name: err.name,
-    }
-  );
+  // Log the real error on the server without request query parameters or secrets
+  logger.error(`${req.method} ${req.path || "/"} failed: ${err.message}`, {
+    statusCode,
+    name: err.name,
+  });
 
   const response = {
     error:
