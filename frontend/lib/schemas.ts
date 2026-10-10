@@ -66,7 +66,7 @@ export const aircraftResponseSchema = z.object({
   radiusNm: z.number().min(5).max(100),
   updatedAt: z.string().max(50),
   count: z.number().min(0),
-  aircraft: z.array(aircraftItemSchema).max(200),
+  aircraft: z.array(aircraftItemSchema).max(300),
 });
 
 // Inferred TypeScript types

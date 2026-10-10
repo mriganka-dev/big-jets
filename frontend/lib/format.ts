@@ -23,7 +23,8 @@ export function formatDistance(distKm: number | null | undefined): string {
   if (typeof distKm !== "number" || isNaN(distKm) || distKm < 0) {
     return "Unknown";
   }
-  return `${distKm.toFixed(1)} km`;
+  const nm = distKm * 0.539957;
+  return `${nm.toFixed(1)} NM (${distKm.toFixed(1)} km)`;
 }
 
 /**
@@ -62,6 +63,19 @@ export function formatVerticalRate(vRate: number | null | undefined): {
   }
 
   return { text: "Level", trend: "level" };
+}
+
+/**
+ * Format heading/track in degrees (0-360) with cardinal direction
+ */
+export function formatHeading(trackDeg: number | null | undefined): string {
+  if (typeof trackDeg !== "number" || isNaN(trackDeg)) {
+    return "Unknown";
+  }
+  const normalized = Math.round(((trackDeg % 360) + 360) % 360);
+  const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const index = Math.round(normalized / 22.5) % 16;
+  return `${normalized}° (${directions[index]})`;
 }
 
 /**

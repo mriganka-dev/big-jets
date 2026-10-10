@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PATTERNS } from "@/lib/constants";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Flight Alerts & Notifications",
@@ -12,7 +14,10 @@ export default function AlertsPage() {
   const isValidBot = PATTERNS.BOT_USERNAME.test(rawBotUsername);
 
   return (
-    <div className="container">
+    <div className="site-content-layout">
+      <SiteHeader />
+      <main id="main-content" className="main-content" tabIndex={-1}>
+        <div className="container">
       <div className="content-page">
         <header className="page-header">
           <h1 className="page-title">Flight Alerts &amp; Notifications</h1>
@@ -144,5 +149,9 @@ export default function AlertsPage() {
         </section>
       </div>
     </div>
+  </main>
+  <SiteFooter />
+</div>
+
   );
 }

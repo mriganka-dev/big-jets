@@ -79,6 +79,9 @@ src/data/store.json*
 src/data/*.tmp
 src/data/*.corrupt-*
 
+# Raw airport data source (large CSV)
+data-source/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

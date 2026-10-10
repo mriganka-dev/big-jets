@@ -1,10 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchAirports, ApiError } from "@/lib/api";
-import { AirportPicker } from "@/components/AirportPicker";
+import { findAirportByIcao } from "@/lib/airports";
+import { DEFAULT_AIRPORT_ICAO } from "@/lib/constants";
+import { RadarView } from "@/components/RadarView";
 import type { AirportItem } from "@/lib/schemas";
 
-// Revalidate airport list every 5 minutes
+// Revalidate airport cache periodically
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Big Jets | Live Flight Radar Map",
+    description:
+      "Full-screen live flight radar tracking big, rare, and military aircraft near airports using open ADS-B telemetry.",
+  };
+}
 
 export default async function HomePage() {
   let airports: AirportItem[] = [];
@@ -17,32 +28,32 @@ export default async function HomePage() {
     if (err instanceof ApiError) {
       fetchError = err.message;
     } else {
-      fetchError = "Unable to load the supported airport list from the backend service.";
+      fetchError = "Unable to connect to the backend airport telemetry service.";
     }
   }
 
-  return (
-    <div className="container">
-      <div className="home-intro">
-        <h1 className="home-title">Big Jets Alert</h1>
-        <p className="home-description">
-          Live arrivals-style board tracking big, rare, and military aircraft near airports using open ADS-B community data. Select an airport to monitor real-time air traffic.
-        </p>
-      </div>
-
-      {fetchError ? (
-        <div className="alert-box alert-error" role="alert">
-          <h2 className="empty-title" style={{ color: "inherit", marginBottom: "0.5rem" }}>
+  if (fetchError || airports.length === 0) {
+    return (
+      <div className="container" style={{ paddingTop: "4rem", textAlign: "center" }}>
+        <div className="alert-box alert-error" role="alert" style={{ maxWidth: "560px", margin: "0 auto" }}>
+          <h1 className="page-title" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>
             Data Service Unavailable
-          </h2>
-          <p style={{ marginBottom: "1rem" }}>{fetchError}</p>
-          <Link href="/" className="btn btn-sm">
+          </h1>
+          <p style={{ marginBottom: "1.5rem" }}>
+            {fetchError || "No supported airports were returned by the backend service."}
+          </p>
+          <Link href="/" className="btn btn-primary btn-sm">
             Retry Connection
           </Link>
         </div>
-      ) : (
-        <AirportPicker airports={airports} />
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // Validate configured default airport against airport list
+  const configuredDefault = (DEFAULT_AIRPORT_ICAO || "VECC").toUpperCase();
+  const matchedDefault = findAirportByIcao(airports, configuredDefault);
+  const targetAirport = matchedDefault || airports[0];
+
+  return <RadarView airport={targetAirport} allAirports={airports} />;
 }

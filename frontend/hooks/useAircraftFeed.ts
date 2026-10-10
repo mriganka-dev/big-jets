@@ -5,7 +5,7 @@ import { fetchAircraft, type AircraftQueryOptions, ApiError } from "@/lib/api";
 import type { AircraftResponse } from "@/lib/schemas";
 import { LIMITS } from "@/lib/constants";
 
-export type FeedStatus = "loading" | "success" | "error";
+export type FeedStatus = "idle" | "loading" | "success" | "error";
 
 interface UseAircraftFeedResult {
   data: AircraftResponse | null;
@@ -36,7 +36,7 @@ export function useAircraftFeed(
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const backoffDelayRef = useRef<number>(LIMITS.POLL_INTERVAL_MS);
 
-  // Stale checker effect
+  // Stale checker effect (updates every 5 seconds)
   useEffect(() => {
     const staleInterval = setInterval(() => {
       if (lastUpdated) {
@@ -81,11 +81,12 @@ export function useAircraftFeed(
         if (err instanceof ApiError) {
           setError(err.message);
         } else {
-          setError("Unable to update live aircraft data.");
+          setError("Unable to update live aircraft data. Telemetry service may be temporarily unavailable.");
         }
 
+        // Exponential backoff between 30s and 120s
         backoffDelayRef.current = Math.min(
-          backoffDelayRef.current * 2,
+          Math.max(backoffDelayRef.current * 2, LIMITS.MIN_BACKOFF_MS),
           LIMITS.MAX_BACKOFF_MS
         );
       } finally {
@@ -116,11 +117,17 @@ export function useAircraftFeed(
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        // Tab hidden: pause polling and cancel scheduled timer
         if (timerRef.current) {
           clearTimeout(timerRef.current);
           timerRef.current = null;
         }
       } else {
+        // Tab visible again: immediately trigger a fresh poll
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
         runPollCycle();
       }
     };
@@ -133,6 +140,7 @@ export function useAircraftFeed(
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
       controller.abort();
     };
@@ -140,8 +148,13 @@ export function useAircraftFeed(
 
   const refresh = useCallback(() => {
     backoffDelayRef.current = LIMITS.POLL_INTERVAL_MS;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    setStatus("loading");
     executeFetch(controller.signal);
   }, [executeFetch]);
 
