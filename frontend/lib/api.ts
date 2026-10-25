@@ -1,6 +1,9 @@
 import {
+  airportItemSchema,
   airportsResponseSchema,
+  airportSearchResponseSchema,
   aircraftResponseSchema,
+  type AirportItem,
   type AirportsResponse,
   type AircraftResponse,
   type AircraftCategory,
@@ -12,7 +15,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number = 500,
-    public readonly code: string = "API_ERROR"
+    public readonly code: string = "API_ERROR",
   ) {
     super(message);
     this.name = "ApiError";
@@ -20,21 +23,27 @@ export class ApiError extends Error {
 }
 
 export class NetworkError extends ApiError {
-  constructor(message = "Network connection failed. Please check your connection.") {
+  constructor(
+    message = "Network connection failed. Please check your connection.",
+  ) {
     super(message, 0, "NETWORK_ERROR");
     this.name = "NetworkError";
   }
 }
 
 export class TimeoutError extends ApiError {
-  constructor(message = "Request timed out. The server took too long to respond.") {
+  constructor(
+    message = "Request timed out. The server took too long to respond.",
+  ) {
     super(message, 408, "TIMEOUT_ERROR");
     this.name = "TimeoutError";
   }
 }
 
 export class RateLimitError extends ApiError {
-  constructor(message = "Too many requests. Please wait a moment before trying again.") {
+  constructor(
+    message = "Too many requests. Please wait a moment before trying again.",
+  ) {
     super(message, 429, "RATE_LIMITED");
     this.name = "RateLimitError";
   }
@@ -59,12 +68,18 @@ const getApiBaseUrl = (): string => {
 };
 
 // Helper to merge an external AbortSignal with a timeout
-function createCombinedSignal(userSignal?: AbortSignal, timeoutMs = LIMITS.FETCH_TIMEOUT_MS): {
+function createCombinedSignal(
+  userSignal?: AbortSignal,
+  timeoutMs = LIMITS.FETCH_TIMEOUT_MS,
+): {
   signal: AbortSignal;
   cleanup: () => void;
 } {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(new TimeoutError()), timeoutMs);
+  const timer = setTimeout(
+    () => controller.abort(new TimeoutError()),
+    timeoutMs,
+  );
 
   const onUserAbort = () => {
     controller.abort(userSignal?.reason);
@@ -91,7 +106,9 @@ function createCombinedSignal(userSignal?: AbortSignal, timeoutMs = LIMITS.FETCH
 /**
  * Fetch supported airports list from the backend
  */
-export async function fetchAirports(userSignal?: AbortSignal): Promise<AirportsResponse> {
+export async function fetchAirports(
+  userSignal?: AbortSignal,
+): Promise<AirportsResponse> {
   const { signal, cleanup } = createCombinedSignal(userSignal);
   const baseUrl = getApiBaseUrl();
 
@@ -108,7 +125,10 @@ export async function fetchAirports(userSignal?: AbortSignal): Promise<AirportsR
     }
 
     if (!res.ok) {
-      throw new ApiError(`Server responded with status ${res.status}`, res.status);
+      throw new ApiError(
+        `Server responded with status ${res.status}`,
+        res.status,
+      );
     }
 
     const data: unknown = await res.json();
@@ -144,24 +164,33 @@ export async function fetchAirports(userSignal?: AbortSignal): Promise<AirportsR
 export async function fetchAircraft(
   icaoInput: string,
   options: AircraftQueryOptions = {},
-  userSignal?: AbortSignal
+  userSignal?: AbortSignal,
 ): Promise<AircraftResponse> {
   const cleanIcao = icaoInput.trim().toUpperCase();
   if (!PATTERNS.ICAO.test(cleanIcao)) {
-    throw new ApiError(`Invalid airport ICAO code: ${cleanIcao}`, 400, "INVALID_ICAO");
+    throw new ApiError(
+      `Invalid airport ICAO code: ${cleanIcao}`,
+      400,
+      "INVALID_ICAO",
+    );
   }
 
   const params = new URLSearchParams();
 
   // Validate radius
   if (typeof options.radius === "number") {
-    const r = Math.min(Math.max(Math.floor(options.radius), LIMITS.MIN_RADIUS_NM), LIMITS.MAX_RADIUS_NM);
+    const r = Math.min(
+      Math.max(Math.floor(options.radius), LIMITS.MIN_RADIUS_NM),
+      LIMITS.MAX_RADIUS_NM,
+    );
     params.set("radius", r.toString());
   }
 
   // Validate categories
   if (options.categories && options.categories.length > 0) {
-    const validCats = options.categories.filter((cat) => Object.values(CATEGORIES).includes(cat));
+    const validCats = options.categories.filter((cat) =>
+      Object.values(CATEGORIES).includes(cat),
+    );
     if (validCats.length > 0) {
       params.set("category", validCats.join(","));
     }
@@ -196,7 +225,10 @@ export async function fetchAircraft(
     }
 
     if (!res.ok) {
-      throw new ApiError(`Server responded with status ${res.status}`, res.status);
+      throw new ApiError(
+        `Server responded with status ${res.status}`,
+        res.status,
+      );
     }
 
     const data: unknown = await res.json();
@@ -221,6 +253,138 @@ export async function fetchAircraft(
       throw new NetworkError();
     }
     throw new ApiError(`Failed to fetch aircraft near ${cleanIcao}`, 500);
+  } finally {
+    cleanup();
+  }
+}
+
+/**
+ * Search airports by query string matching name, city, ICAO, or IATA
+ */
+export async function searchAirports(
+  query: string,
+  userSignal?: AbortSignal,
+): Promise<AirportItem[]> {
+  const clean = query.trim();
+  if (clean.length < 2) {
+    return [];
+  }
+
+  const { signal, cleanup } = createCombinedSignal(userSignal);
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/airports/search?q=${encodeURIComponent(clean)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal,
+      cache: "default",
+    });
+
+    if (res.status === 429) {
+      throw new RateLimitError();
+    }
+
+    if (!res.ok) {
+      throw new ApiError(
+        `Server responded with status ${res.status}`,
+        res.status,
+      );
+    }
+
+    const data: unknown = await res.json();
+    const parsed = airportSearchResponseSchema.safeParse(data);
+
+    if (!parsed.success) {
+      throw new ValidationError();
+    }
+
+    return parsed.data.airports;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    if (err instanceof DOMException && err.name === "AbortError") {
+      if (signal.reason instanceof TimeoutError) {
+        throw signal.reason;
+      }
+      throw err;
+    }
+    if (err instanceof TypeError) {
+      throw new NetworkError();
+    }
+    throw new ApiError("Failed to search airports", 500);
+  } finally {
+    cleanup();
+  }
+}
+
+/**
+ * Fetch a single airport by 4-letter ICAO code
+ */
+export async function fetchAirport(
+  icaoInput: string,
+  userSignal?: AbortSignal,
+): Promise<AirportItem> {
+  const cleanIcao = icaoInput.trim().toUpperCase();
+  if (!PATTERNS.ICAO.test(cleanIcao)) {
+    throw new ApiError(
+      `Invalid airport ICAO code: ${cleanIcao}`,
+      400,
+      "INVALID_ICAO",
+    );
+  }
+
+  const { signal, cleanup } = createCombinedSignal(userSignal);
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/airports/${encodeURIComponent(cleanIcao)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal,
+      cache: "default",
+    });
+
+    if (res.status === 429) {
+      throw new RateLimitError();
+    }
+
+    if (res.status === 404) {
+      throw new ApiError(`Airport ${cleanIcao} not found`, 404, "NOT_FOUND");
+    }
+
+    if (!res.ok) {
+      throw new ApiError(
+        `Server responded with status ${res.status}`,
+        res.status,
+      );
+    }
+
+    const data: unknown = await res.json();
+    const parsed = airportItemSchema.safeParse(data);
+
+    if (!parsed.success) {
+      throw new ValidationError();
+    }
+
+    return parsed.data;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    if (err instanceof DOMException && err.name === "AbortError") {
+      if (signal.reason instanceof TimeoutError) {
+        throw signal.reason;
+      }
+      throw err;
+    }
+    if (err instanceof TypeError) {
+      throw new NetworkError();
+    }
+    throw new ApiError(`Failed to fetch airport ${cleanIcao}`, 500);
   } finally {
     cleanup();
   }

@@ -15,12 +15,36 @@ export const CATEGORY_META: Record<
   CategoryKey,
   { label: string; description: string; priority: number }
 > = {
-  RARE: { label: "Rare", description: "Rare or uncommon aircraft type", priority: 1 },
-  MIL_FIGHTER: { label: "Fighter", description: "Military fighter jet", priority: 2 },
-  BIG: { label: "Big", description: "Wide-body or heavy transport", priority: 3 },
-  VIP_JET: { label: "VIP", description: "Business jet or VIP transport", priority: 4 },
-  MIL_OTHER: { label: "Military", description: "Other military aircraft", priority: 5 },
-  WATCHED: { label: "Watched", description: "Custom watched airframe", priority: 6 },
+  RARE: {
+    label: "Rare",
+    description: "Rare or uncommon aircraft type",
+    priority: 1,
+  },
+  MIL_FIGHTER: {
+    label: "Fighter",
+    description: "Military fighter jet",
+    priority: 2,
+  },
+  BIG: {
+    label: "Big",
+    description: "Wide-body or heavy transport",
+    priority: 3,
+  },
+  VIP_JET: {
+    label: "VIP",
+    description: "Business jet or VIP transport",
+    priority: 4,
+  },
+  MIL_OTHER: {
+    label: "Military",
+    description: "Other military aircraft",
+    priority: 5,
+  },
+  WATCHED: {
+    label: "Watched",
+    description: "Custom watched airframe",
+    priority: 6,
+  },
 };
 
 export const FLIGHT_PHASES = {
@@ -58,11 +82,11 @@ export const LIMITS = {
 export const DEFAULT_AIRPORT_ICAO =
   process.env.NEXT_PUBLIC_DEFAULT_AIRPORT || "VECC";
 
-
 export const PATTERNS = {
   ICAO: /^[A-Za-z]{4}$/,
   REGISTRATION: /^[A-Z0-9-]{3,10}$/,
   BOT_USERNAME: /^[A-Za-z0-9_]{5,32}$/,
+  SEARCH_QUERY: /^[\p{L}0-9\s\-'.',]+$/u,
 };
 
 export const DEFAULT_API_URL = "http://localhost:4000";

@@ -2,7 +2,12 @@
 
 import { useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { CATEGORIES, CATEGORY_META, LIMITS, type CategoryKey } from "@/lib/constants";
+import {
+  CATEGORIES,
+  CATEGORY_META,
+  LIMITS,
+  type CategoryKey,
+} from "@/lib/constants";
 import type { AircraftCategory } from "@/lib/schemas";
 
 interface FilterBarProps {
@@ -37,7 +42,11 @@ export function FilterBar({
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
-  const updateUrlParams = (cats: AircraftCategory[], all: boolean, rad: number) => {
+  const updateUrlParams = (
+    cats: AircraftCategory[],
+    all: boolean,
+    rad: number,
+  ) => {
     const params = new URLSearchParams(searchParams?.toString());
 
     if (cats.length > 0 && !all) {
@@ -116,9 +125,15 @@ export function FilterBar({
         <span className="filter-group-label" id="category-filter-label">
           Categories:
         </span>
-        <div className="filter-chips" role="group" aria-labelledby="category-filter-label">
+        <div
+          className="filter-chips"
+          role="group"
+          aria-labelledby="category-filter-label"
+        >
           {FILTERABLE_CATEGORIES.map((catKey) => {
-            const isSelected = selectedCategories.includes(catKey as AircraftCategory);
+            const isSelected = selectedCategories.includes(
+              catKey as AircraftCategory,
+            );
             const meta = CATEGORY_META[catKey];
             return (
               <button
@@ -164,7 +179,9 @@ export function FilterBar({
           </select>
         </div>
 
-        {(selectedCategories.length > 0 || showAll || radius !== LIMITS.DEFAULT_RADIUS_NM) && (
+        {(selectedCategories.length > 0 ||
+          showAll ||
+          radius !== LIMITS.DEFAULT_RADIUS_NM) && (
           <button
             type="button"
             onClick={handleResetFilters}

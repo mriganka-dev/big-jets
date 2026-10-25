@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchAirports, ApiError } from "@/lib/api";
-import { findAirportByIcao } from "@/lib/airports";
+import { fetchAirports, fetchAirport, ApiError } from "@/lib/api";
 import { DEFAULT_AIRPORT_ICAO } from "@/lib/constants";
 import { RadarView } from "@/components/RadarView";
 import type { AirportItem } from "@/lib/schemas";
@@ -28,19 +27,31 @@ export default async function HomePage() {
     if (err instanceof ApiError) {
       fetchError = err.message;
     } else {
-      fetchError = "Unable to connect to the backend airport telemetry service.";
+      fetchError =
+        "Unable to connect to the backend airport telemetry service.";
     }
   }
 
   if (fetchError || airports.length === 0) {
     return (
-      <div className="container" style={{ paddingTop: "4rem", textAlign: "center" }}>
-        <div className="alert-box alert-error" role="alert" style={{ maxWidth: "560px", margin: "0 auto" }}>
-          <h1 className="page-title" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>
+      <div
+        className="container"
+        style={{ paddingTop: "4rem", textAlign: "center" }}
+      >
+        <div
+          className="alert-box alert-error"
+          role="alert"
+          style={{ maxWidth: "560px", margin: "0 auto" }}
+        >
+          <h1
+            className="page-title"
+            style={{ marginBottom: "0.5rem" }}
+          >
             Data Service Unavailable
           </h1>
           <p style={{ marginBottom: "1.5rem" }}>
-            {fetchError || "No supported airports were returned by the backend service."}
+            {fetchError ||
+              "No supported airports were returned by the backend service."}
           </p>
           <Link href="/" className="btn btn-primary btn-sm">
             Retry Connection
@@ -50,10 +61,21 @@ export default async function HomePage() {
     );
   }
 
-  // Validate configured default airport against airport list
-  const configuredDefault = (DEFAULT_AIRPORT_ICAO || "VECC").toUpperCase();
-  const matchedDefault = findAirportByIcao(airports, configuredDefault);
-  const targetAirport = matchedDefault || airports[0];
+  // Validate configured default airport via fetchAirport
+  const configuredDefault = (
+    process.env.NEXT_PUBLIC_DEFAULT_AIRPORT ||
+    DEFAULT_AIRPORT_ICAO ||
+    "VECC"
+  )
+    .trim()
+    .toUpperCase();
+
+  let targetAirport: AirportItem = airports[0];
+  try {
+    targetAirport = await fetchAirport(configuredDefault);
+  } catch {
+    targetAirport = airports[0];
+  }
 
   return <RadarView airport={targetAirport} allAirports={airports} />;
 }

@@ -15,7 +15,7 @@ import {
 interface AircraftMapProps {
   airport: AirportItem;
   aircraft: AircraftItem[];
-  radiusNm: number;
+  radiusNm?: number;
   selectedHex?: string | null;
   onSelectAircraft?: (hex: string) => void;
   maxMarkerCapHit?: boolean;
@@ -24,7 +24,6 @@ interface AircraftMapProps {
 export default function AircraftMap({
   airport,
   aircraft,
-  radiusNm,
   selectedHex,
   onSelectAircraft = () => {},
 }: AircraftMapProps) {
@@ -32,43 +31,53 @@ export default function AircraftMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersMapRef = useRef<Map<string, ManagedMarker>>(new Map());
   const trailsMapRef = useRef<Map<string, [number, number][]>>(new Map());
-  const circleRef = useRef<L.Circle | null>(null);
   const trailsLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Helper to calculate airport bounds with 35% padding
-  const getAirportBounds = useCallback(
-    (lat: number, lon: number, radiusInNm: number) => {
-      const radiusKm = radiusInNm * 1.852;
-      const latDelta = (radiusKm / 111) * 1.35;
-      const cosLat = Math.cos((lat * Math.PI) / 180);
-      const lonDelta = (radiusKm / (111 * Math.max(cosLat, 0.1))) * 1.35;
-
-      return L.latLngBounds(
-        [lat - latDelta, lon - lonDelta],
-        [lat + latDelta, lon + lonDelta]
-      );
-    },
-    []
-  );
-
-  // 1. Initialize Map instance
+  // 1. Initialize Map instance (open global navigation)
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) {
       return;
     }
 
-    const bounds = getAirportBounds(airport.lat, airport.lon, radiusNm);
-
     const map = L.map(mapContainerRef.current, {
       center: [airport.lat, airport.lon],
-      zoom: 8,
-      minZoom: 6,
-      maxZoom: 15,
-      maxBounds: bounds,
-      maxBoundsViscosity: 0.8,
+      zoom: 3,
+      minZoom: 2,
+      maxZoom: 18,
+      maxBounds: [
+        [-85, -180],
+        [85, 180],
+      ],
+      maxBoundsViscosity: 0.5,
       scrollWheelZoom: true,
       keyboard: true,
+      worldCopyJump: true,
+      zoomControl: false,
     });
+
+    // Flightradar24 Style Top-Right Controls Stack
+    L.control.zoom({ position: "topright" }).addTo(map);
+
+    // Custom "Center on Airport" Map Control
+    const CenterControl = L.Control.extend({
+      options: { position: "topright" },
+      onAdd: function () {
+        const container = L.DomUtil.create("div", "leaflet-bar fr24-center-control");
+        const btn = L.DomUtil.create("a", "fr24-center-btn", container);
+        btn.href = "#";
+        btn.title = `Center view on ${airport.name} (${airport.icao})`;
+        btn.setAttribute("role", "button");
+        btn.setAttribute("aria-label", "Center view on airport");
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>`;
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(btn, "click", (e) => {
+          L.DomEvent.preventDefault(e);
+          map.setView([airport.lat, airport.lon], 4, { animate: true });
+        });
+        return container;
+      },
+    });
+    new CenterControl().addTo(map);
 
     // OpenStreetMap Tile Layer (with strict CSP compatibility)
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -100,20 +109,11 @@ export default function AircraftMap({
     airportTitle.textContent = `${airport.name} (${airport.icao})`;
     airportPopup.appendChild(airportTitle);
     const airportDesc = document.createElement("div");
-    airportDesc.textContent = airport.fullName;
+    airportDesc.textContent = airport.city
+      ? `${airport.city}, ${airport.country}`
+      : airport.country;
     airportPopup.appendChild(airportDesc);
     airportMarker.bindPopup(airportPopup);
-
-    // Detection Radius dashed perimeter circle
-    const circle = L.circle([airport.lat, airport.lon], {
-      radius: radiusNm * 1852,
-      color: "#38bdf8",
-      weight: 1.5,
-      dashArray: "6, 8",
-      fillColor: "#0284c7",
-      fillOpacity: 0.03,
-    }).addTo(map);
-    circleRef.current = circle;
 
     mapInstanceRef.current = map;
 
@@ -123,59 +123,47 @@ export default function AircraftMap({
     return () => {
       map.remove();
       mapInstanceRef.current = null;
-      circleRef.current = null;
       trailsLayerRef.current = null;
       markersMap.clear();
       trailsMap.clear();
     };
-  }, [airport.lat, airport.lon, airport.name, airport.icao, airport.fullName, getAirportBounds, radiusNm]);
+  }, [
+    airport.lat,
+    airport.lon,
+    airport.name,
+    airport.icao,
+    airport.city,
+    airport.country,
+  ]);
 
-  // 2. Update Airport Bounds and Radius Circle when radius or airport changes
+  // 2. Pan to airport when selected airport changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    const bounds = getAirportBounds(airport.lat, airport.lon, radiusNm);
-    map.setMaxBounds(bounds);
-
-    if (circleRef.current) {
-      circleRef.current.setLatLng([airport.lat, airport.lon]);
-      circleRef.current.setRadius(radiusNm * 1852);
-    }
-  }, [airport.lat, airport.lon, radiusNm, getAirportBounds]);
+    map.panTo([airport.lat, airport.lon]);
+  }, [airport.lat, airport.lon]);
 
   // 3. Diff and Update Aircraft Markers without flicker
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Respect NEXT_PUBLIC_SHOW_MILITARY_ON_MAP privacy rule
-    const showMilitary = process.env.NEXT_PUBLIC_SHOW_MILITARY_ON_MAP === "true";
-
+    // All aircraft with valid coordinates are eligible globally
     const eligibleAircraft = aircraft.filter((ac) => {
-      if (typeof ac.lat !== "number" || typeof ac.lon !== "number") {
-        return false;
-      }
-      if (!showMilitary) {
-        if (
-          ac.categories.includes("MIL_FIGHTER") ||
-          ac.categories.includes("MIL_OTHER")
-        ) {
-          return false;
-        }
-      }
-      return true;
+      return typeof ac.lat === "number" && typeof ac.lon === "number";
     });
 
-    // 300 marker cap with priority sorting (selected, rare/fighter, big, then nearest)
+    // Priority sorting (selected first, rare/fighter, big, then nearest)
     const prioritizedAircraft = [...eligibleAircraft].sort((a, b) => {
       const aSelected = selectedHex?.toUpperCase() === a.hex.toUpperCase();
       const bSelected = selectedHex?.toUpperCase() === b.hex.toUpperCase();
       if (aSelected && !bSelected) return -1;
       if (!aSelected && bSelected) return 1;
 
-      const aRare = a.categories.includes("RARE") || a.categories.includes("MIL_FIGHTER");
-      const bRare = b.categories.includes("RARE") || b.categories.includes("MIL_FIGHTER");
+      const aRare =
+        a.categories.includes("RARE") || a.categories.includes("MIL_FIGHTER");
+      const bRare =
+        b.categories.includes("RARE") || b.categories.includes("MIL_FIGHTER");
       if (aRare && !bRare) return -1;
       if (!aRare && bRare) return 1;
 
@@ -187,7 +175,7 @@ export default function AircraftMap({
       return (a.distKm ?? 9999) - (b.distKm ?? 9999);
     });
 
-    const displayAircraft = prioritizedAircraft.slice(0, 300);
+    const displayAircraft = prioritizedAircraft.slice(0, 2000);
     const activeHexSet = new Set<string>();
 
     const markersMap = markersMapRef.current;
@@ -233,15 +221,24 @@ export default function AircraftMap({
         // Update popup & tooltip content safely via DOM
         existing.marker.setTooltipContent(buildSafeTooltipContent(ac));
 
+        // Update z-index offset on selection
+        existing.marker.setZIndexOffset(isSelected ? 9999 : 100);
+
         // Update trail polyline
         if (existing.polyTrail) {
           existing.polyTrail.setLatLngs(trail);
+          existing.polyTrail.setStyle({
+            color: isSelected ? "#d97706" : "#f59e0b",
+            weight: isSelected ? 3.5 : 1.5,
+            opacity: isSelected ? 0.95 : 0.45,
+            dashArray: isSelected ? undefined : "3, 6",
+          });
         } else if (trail.length > 1 && trailsLayer) {
           const poly = L.polyline(trail, {
-            color: isSelected ? "#38bdf8" : "#0284c7",
-            weight: isSelected ? 2 : 1,
-            opacity: isSelected ? 0.6 : 0.25,
-            dashArray: "3, 6",
+            color: isSelected ? "#d97706" : "#f59e0b",
+            weight: isSelected ? 3.5 : 1.5,
+            opacity: isSelected ? 0.95 : 0.45,
+            dashArray: isSelected ? undefined : "3, 6",
           }).addTo(trailsLayer);
           existing.polyTrail = poly;
         }
@@ -250,12 +247,13 @@ export default function AircraftMap({
         const icon = createAircraftIcon(ac, isSelected);
         const marker = L.marker(pos, {
           icon,
-          zIndexOffset: isSelected ? 900 : 100,
+          zIndexOffset: isSelected ? 9999 : 100,
         }).addTo(map);
 
-        // Bind click-to-select
+        // Bind click-to-select and pan smoothly
         marker.on("click", () => {
           onSelectAircraft(ac.hex);
+          map.panTo(pos, { animate: true, duration: 0.5 });
         });
 
         // Bind safe tooltip
@@ -274,10 +272,10 @@ export default function AircraftMap({
         let polyTrail: L.Polyline | undefined;
         if (trail.length > 1 && trailsLayer) {
           polyTrail = L.polyline(trail, {
-            color: isSelected ? "#38bdf8" : "#0284c7",
-            weight: isSelected ? 2 : 1,
-            opacity: isSelected ? 0.6 : 0.25,
-            dashArray: "3, 6",
+            color: isSelected ? "#d97706" : "#f59e0b",
+            weight: isSelected ? 3.5 : 1.5,
+            opacity: isSelected ? 0.95 : 0.45,
+            dashArray: isSelected ? undefined : "3, 6",
           }).addTo(trailsLayer);
         }
 

@@ -294,6 +294,23 @@ export function listWatchedAirports() {
   return Array.from(watchedSet);
 }
 
+export function listWatchedAirportsByFrequency() {
+  const activeUserIds = new Set(
+    store.users.filter((u) => !u.paused).map((u) => u.id)
+  );
+
+  const counts = new Map();
+  for (const sub of store.subscriptions) {
+    if (activeUserIds.has(sub.userId)) {
+      counts.set(sub.airport, (counts.get(sub.airport) || 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([airport, count]) => ({ airport, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // ==================== ALERT TRACKING ====================
 
 export function wasAlertSent({ userId, hex, event, channel, airport }) {

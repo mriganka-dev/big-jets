@@ -24,7 +24,8 @@ export function AircraftRow({
 }: AircraftRowProps) {
   const typeDisplay = aircraft.type || "Unknown Type";
   const modelDisplay = aircraft.model || aircraft.type || "Unknown Model";
-  const callsignDisplay = aircraft.callsign?.trim() || aircraft.hex.toUpperCase();
+  const callsignDisplay =
+    aircraft.callsign?.trim() || aircraft.hex.toUpperCase();
   const operatorDisplay = aircraft.operator?.trim() || null;
   const phaseLabel =
     PHASE_LABELS[aircraft.phase as FlightPhaseKey] || aircraft.phase;
@@ -56,7 +57,9 @@ export function AircraftRow({
     >
       <div className="aircraft-row-top">
         <div className="aircraft-callsign-group">
-          <span className="aircraft-callsign tabular-nums">{callsignDisplay}</span>
+          <span className="aircraft-callsign tabular-nums">
+            {callsignDisplay}
+          </span>
           {aircraft.reg && (
             <span className="aircraft-reg tabular-nums">{aircraft.reg}</span>
           )}
@@ -69,7 +72,9 @@ export function AircraftRow({
       <div className="aircraft-row-mid">
         <span className="aircraft-model" title={modelDisplay}>
           {typeDisplay}
-          {aircraft.model && aircraft.model !== aircraft.type ? ` · ${aircraft.model}` : ""}
+          {aircraft.model && aircraft.model !== aircraft.type
+            ? ` · ${aircraft.model}`
+            : ""}
         </span>
         {operatorDisplay && (
           <span className="aircraft-operator"> · {operatorDisplay}</span>

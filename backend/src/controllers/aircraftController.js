@@ -1,17 +1,10 @@
-import { AIRPORTS } from "../constants.js";
-import { fetchAircraftForAirport } from "../utils/adsb.js";
+import { getAirport, listFeaturedAirports } from "../utils/airports.js";
+import { fetchAircraftForAirport, fetchGlobalFeeds } from "../utils/adsb.js";
+import { formatAircraft } from "../utils/classifier.js";
 import { icaoSchema, airportAircraftQuerySchema } from "../utils/validators.js";
 
 export function getAirports(req, res) {
-  const airports = Object.values(AIRPORTS).map((airport) => ({
-    icao: airport.icao,
-    iata: airport.iata,
-    name: airport.name,
-    fullName: airport.fullName,
-    lat: airport.lat,
-    lon: airport.lon,
-  }));
-
+  const airports = listFeaturedAirports();
   res.json({ airports });
 }
 
@@ -39,8 +32,36 @@ export async function getAirportAircraft(req, res, next) {
       all: showAll,
     } = queryParse.data;
 
-    const airport = AIRPORTS[icao];
-    const aircraftList = await fetchAircraftForAirport(airport, radius);
+    const airport = getAirport(icao);
+    if (!airport) {
+      return res.status(404).json({ error: "Airport not found" });
+    }
+    const airportAircraft = await fetchAircraftForAirport(airport, radius);
+    const aircraftList = [...airportAircraft];
+
+    try {
+      const globalRaw = await fetchGlobalFeeds();
+      const seenHexes = new Set(airportAircraft.map((a) => a.hex.toLowerCase()));
+      for (const raw of globalRaw) {
+        if (
+          !raw ||
+          typeof raw !== "object" ||
+          !raw.hex ||
+          typeof raw.lat !== "number" ||
+          typeof raw.lon !== "number"
+        ) {
+          continue;
+        }
+        const hexLower = raw.hex.toLowerCase();
+        if (seenHexes.has(hexLower)) {
+          continue;
+        }
+        seenHexes.add(hexLower);
+        aircraftList.push(formatAircraft(raw, airport));
+      }
+    } catch {
+      // Continue with airportAircraft if global feeds encounter transient issues
+    }
 
     let filtered = aircraftList;
 

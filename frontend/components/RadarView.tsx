@@ -8,11 +8,10 @@ import type { AirportItem } from "@/lib/schemas";
 import { useAircraftFeed } from "@/hooks/useAircraftFeed";
 import { AirportSearch } from "./AirportSearch";
 import { FilterChips } from "./FilterChips";
-import { RadiusSelect } from "./RadiusSelect";
 import { AircraftList } from "./AircraftList";
 import { AircraftPanel } from "./AircraftPanel";
 import { StatusLine } from "./StatusLine";
-import { LIMITS, CATEGORIES, type CategoryKey } from "@/lib/constants";
+import { CATEGORIES, type CategoryKey } from "@/lib/constants";
 
 // Dynamically import Leaflet map with SSR disabled following Next.js guidelines
 const AircraftMap = dynamic(() => import("./AircraftMap"), {
@@ -29,7 +28,9 @@ const AircraftMap = dynamic(() => import("./AircraftMap"), {
       </div>
       <div className="radar-placeholder-notice">
         <span className="status-pulse-dot" aria-hidden="true" />
-        <p className="placeholder-airport-title">Loading Radar Cartography...</p>
+        <p className="placeholder-airport-title">
+          Loading Radar Cartography...
+        </p>
       </div>
     </div>
   ),
@@ -50,42 +51,32 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
   const selectedHex =
     rawHex && /^[0-9A-Fa-f]{6}$/.test(rawHex) ? rawHex.toUpperCase() : null;
 
-  const rawRadius = Number(searchParams.get("radius"));
-  const initialRadius =
-    !isNaN(rawRadius) &&
-    rawRadius >= LIMITS.MIN_RADIUS_NM &&
-    rawRadius <= LIMITS.MAX_RADIUS_NM
-      ? Math.floor(rawRadius)
-      : LIMITS.DEFAULT_RADIUS_NM;
-
   const rawCat = searchParams.get("category");
   const initialCategories = rawCat
     ? rawCat
         .split(",")
         .map((c) => c.trim().toUpperCase())
         .filter((c): c is CategoryKey =>
-          Object.values(CATEGORIES).includes(c as CategoryKey)
+          Object.values(CATEGORIES).includes(c as CategoryKey),
         )
     : [];
 
-  const initialShowAll = searchParams.get("all") === "true" || initialCategories.length === 0;
+  const initialShowAll =
+    searchParams.get("all") === "true" || initialCategories.length === 0;
 
   // Local state initialized from URL
   const [isListOpen, setIsListOpen] = useState(false);
-  const [radius, setRadius] = useState<number>(initialRadius);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
+  const [selectedCategories, setSelectedCategories] =
+    useState<string[]>(initialCategories);
   const [showAllTraffic, setShowAllTraffic] = useState<boolean>(initialShowAll);
   const [mapError, setMapError] = useState<boolean>(false);
 
   // Connect live data feed (15s polling, tab visibility pause, error backoff)
   // Request all=true from backend; client narrows by category
-  const { data, status, error, lastUpdated, isStale, refresh } = useAircraftFeed(
-    airport.icao,
-    {
-      radius,
+  const { data, status, error, lastUpdated, isStale, refresh } =
+    useAircraftFeed(airport.icao, {
       all: true,
-    }
-  );
+    });
 
   const allAircraft = useMemo(() => data?.aircraft ?? [], [data]);
 
@@ -95,31 +86,32 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       return allAircraft;
     }
     return allAircraft.filter((ac) =>
-      ac.categories.some((cat) => selectedCategories.includes(cat))
+      ac.categories.some((cat) => selectedCategories.includes(cat)),
     );
   }, [allAircraft, showAllTraffic, selectedCategories]);
 
   // Selected aircraft entity
   const selectedAircraft = useMemo(() => {
     if (!selectedHex) return null;
-    return allAircraft.find((ac) => ac.hex.toUpperCase() === selectedHex) ?? null;
+    return (
+      allAircraft.find((ac) => ac.hex.toUpperCase() === selectedHex) ?? null
+    );
   }, [allAircraft, selectedHex]);
 
-  const maxMarkerCapHit = filteredAircraft.length > 300;
+  const maxMarkerCapHit = filteredAircraft.length > 2000;
 
   // Synchronize state with URL query parameters
   const updateUrlParams = useCallback(
-    (newHex?: string | null, newRadius?: number, newCats?: string[], newAll?: boolean) => {
+    (
+      newHex?: string | null,
+      newCats?: string[],
+      newAll?: boolean,
+    ) => {
       const params = new URLSearchParams();
 
       const hexVal = newHex !== undefined ? newHex : selectedHex;
       if (hexVal && /^[0-9A-Fa-f]{6}$/.test(hexVal)) {
         params.set("a", hexVal.toLowerCase());
-      }
-
-      const radVal = newRadius !== undefined ? newRadius : radius;
-      if (radVal && radVal !== LIMITS.DEFAULT_RADIUS_NM) {
-        params.set("radius", radVal.toString());
       }
 
       const allVal = newAll !== undefined ? newAll : showAllTraffic;
@@ -131,21 +123,19 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [router, pathname, selectedHex, radius, showAllTraffic, selectedCategories]
+    [router, pathname, selectedHex, showAllTraffic, selectedCategories],
   );
 
-  const handleSelectAircraft = useCallback((hex: string) => {
-    updateUrlParams(hex);
-  }, [updateUrlParams]);
+  const handleSelectAircraft = useCallback(
+    (hex: string) => {
+      updateUrlParams(hex);
+    },
+    [updateUrlParams],
+  );
 
   const handleCloseAircraftPanel = useCallback(() => {
     updateUrlParams(null);
   }, [updateUrlParams]);
-
-  const handleChangeRadius = (newRadius: number) => {
-    setRadius(newRadius);
-    updateUrlParams(selectedHex, newRadius);
-  };
 
   const handleToggleCategory = (categoryKey: string) => {
     setShowAllTraffic(false);
@@ -154,13 +144,13 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       : [...selectedCategories, categoryKey];
 
     setSelectedCategories(updated);
-    updateUrlParams(selectedHex, radius, updated, false);
+    updateUrlParams(selectedHex, updated, false);
   };
 
   const handleToggleAll = () => {
     setShowAllTraffic(true);
     setSelectedCategories([]);
-    updateUrlParams(selectedHex, radius, [], true);
+    updateUrlParams(selectedHex, [], true);
   };
 
   return (
@@ -179,7 +169,9 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
               Map cartography could not be loaded.
             </p>
             <p className="placeholder-hint">
-              Live radar list and telemetry remain fully accessible. Click <strong>&quot;List&quot;</strong> in the top-right to view all flights.
+              Live radar list and telemetry remain fully accessible. Click{" "}
+              <strong>&quot;List&quot;</strong> in the top-right to view all
+              flights.
             </p>
             <button
               type="button"
@@ -194,7 +186,6 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
           <AircraftMap
             airport={airport}
             aircraft={filteredAircraft}
-            radiusNm={radius}
             selectedHex={selectedHex}
             onSelectAircraft={handleSelectAircraft}
             maxMarkerCapHit={maxMarkerCapHit}
@@ -207,12 +198,17 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
         {/* Top-Left: Wordmark + Airport Combobox */}
         <div className="controls-left">
           <Link href="/" className="wordmark-link" aria-label="Big Jets Home">
+            <span className="fr24-logo-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+              </svg>
+            </span>
             <span className="wordmark-text">Big Jets</span>
           </Link>
           <AirportSearch airports={allAirports} currentAirport={airport} />
         </div>
 
-        {/* Top-Centre: Filter Chips + Radius Selector */}
+        {/* Top-Centre: Filter Chips */}
         <div className="controls-center">
           <FilterChips
             selectedCategories={selectedCategories}
@@ -220,11 +216,20 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
             onToggleAll={handleToggleAll}
             onToggleCategory={handleToggleCategory}
           />
-          <RadiusSelect radius={radius} onChangeRadius={handleChangeRadius} />
         </div>
 
-        {/* Top-Right: Get Alerts + List Button */}
+        {/* Top-Right: Live Traffic Pill + Get Alerts + List Button */}
         <div className="controls-right">
+          <div
+            className="fr24-live-flights-pill"
+            title="Global aircraft currently tracked"
+            aria-label={`${filteredAircraft.length} live flights tracked`}
+          >
+            <span className="fr24-live-beacon" aria-hidden="true" />
+            <span className="fr24-live-count tabular-nums">{filteredAircraft.length}</span>
+            <span className="fr24-live-label">TRACKED</span>
+          </div>
+
           <Link href="/alerts" className="btn btn-alerts">
             <span className="btn-icon" aria-hidden="true">
               <svg
@@ -250,7 +255,9 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
             className={`btn btn-list ${isListOpen ? "is-active" : ""}`}
             aria-expanded={isListOpen}
             aria-controls="aircraft-list-panel"
-            aria-label={isListOpen ? "Close aircraft list" : "Open aircraft list"}
+            aria-label={
+              isListOpen ? "Close aircraft list" : "Open aircraft list"
+            }
           >
             <span className="btn-icon" aria-hidden="true">
               <svg
@@ -272,7 +279,10 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
               </svg>
             </span>
             <span className="btn-text">
-              List <span className="btn-count-pill tabular-nums">({filteredAircraft.length})</span>
+              List{" "}
+              <span className="btn-count-pill tabular-nums">
+                ({filteredAircraft.length})
+              </span>
             </span>
           </button>
         </div>
@@ -284,7 +294,6 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
         onClose={() => setIsListOpen(false)}
         aircraft={filteredAircraft}
         totalCount={allAircraft.length}
-        radius={radius}
         selectedHex={selectedHex}
         onSelectAircraft={handleSelectAircraft}
         status={status}
@@ -317,7 +326,11 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
 
 export function RadarView(props: RadarViewProps) {
   return (
-    <Suspense fallback={<div className="radar-layout-loading">Loading radar interface...</div>}>
+    <Suspense
+      fallback={
+        <div className="radar-layout-loading">Loading radar interface...</div>
+      }
+    >
       <RadarViewInner {...props} />
     </Suspense>
   );

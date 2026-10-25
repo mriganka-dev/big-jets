@@ -9,81 +9,6 @@ export const CATEGORIES = {
 
 export const CATEGORY_LIST = Object.values(CATEGORIES);
 
-export const AIRPORTS = {
-  VECC: {
-    icao: "VECC",
-    iata: "CCU",
-    name: "Kolkata",
-    fullName: "Netaji Subhash Chandra Bose International Airport",
-    lat: 22.6547,
-    lon: 88.4467,
-    elevationFt: 16,
-  },
-  VIDP: {
-    icao: "VIDP",
-    iata: "DEL",
-    name: "Delhi",
-    fullName: "Indira Gandhi International Airport",
-    lat: 28.5665,
-    lon: 77.1031,
-    elevationFt: 777,
-  },
-  VABB: {
-    icao: "VABB",
-    iata: "BOM",
-    name: "Mumbai",
-    fullName: "Chhatrapati Shivaji Maharaj International Airport",
-    lat: 19.0886,
-    lon: 72.8679,
-    elevationFt: 39,
-  },
-  VOBL: {
-    icao: "VOBL",
-    iata: "BLR",
-    name: "Bengaluru",
-    fullName: "Kempegowda International Airport",
-    lat: 13.1979,
-    lon: 77.7063,
-    elevationFt: 3000,
-  },
-  VOMM: {
-    icao: "VOMM",
-    iata: "MAA",
-    name: "Chennai",
-    fullName: "Chennai International Airport",
-    lat: 12.9941,
-    lon: 80.1709,
-    elevationFt: 52,
-  },
-  VOHS: {
-    icao: "VOHS",
-    iata: "HYD",
-    name: "Hyderabad",
-    fullName: "Rajiv Gandhi International Airport",
-    lat: 17.2403,
-    lon: 78.4294,
-    elevationFt: 2024,
-  },
-  VOCI: {
-    icao: "VOCI",
-    iata: "COK",
-    name: "Cochin",
-    fullName: "Cochin International Airport",
-    lat: 10.152,
-    lon: 76.4019,
-    elevationFt: 30,
-  },
-  VEGT: {
-    icao: "VEGT",
-    iata: "GAU",
-    name: "Guwahati",
-    fullName: "Lokpriya Gopinath Bordoloi International Airport",
-    lat: 26.1061,
-    lon: 91.5859,
-    elevationFt: 162,
-  },
-};
-
 export const AIRCRAFT_TYPES = {
   // Wide-body & Heavy aircraft
   BIG: new Set([
@@ -215,4 +140,9 @@ export const LIMITS = {
   MAX_USER_SUBSCRIPTIONS: 10,
   MAX_TOTAL_USERS: 200,
   ALERT_DEDUP_WINDOW_MS: 3 * 60 * 60 * 1000, // 3 hours
+  MAX_CACHE_ENTRIES: 300,
+  MAX_UPSTREAM_REQUESTS_PER_MINUTE: 120,
+  RADIUS_STEPS: [10, 25, 40, 60, 80, 100],
+  MAX_POLLER_AIRPORTS: 25,
+  POLLER_SPREAD_MS: 1000,
 };

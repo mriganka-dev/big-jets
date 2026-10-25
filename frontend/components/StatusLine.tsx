@@ -28,7 +28,11 @@ export function StatusLine({
     : null;
 
   return (
-    <footer className="status-line-bar" role="contentinfo" aria-label="Radar status and data attribution">
+    <footer
+      className="status-line-bar"
+      role="contentinfo"
+      aria-label="Radar status and data attribution"
+    >
       <div className="status-main-row">
         {/* Status text */}
         <div className="status-info-text" role="status" aria-live="polite">
@@ -48,7 +52,7 @@ export function StatusLine({
                 {count} {count === 1 ? "aircraft" : "aircraft"}
               </span>
               {maxMarkerCapHit && (
-                <span className="status-cap-notice"> (showing top 300)</span>
+                <span className="status-cap-notice"> (showing top 2000)</span>
               )}
             </span>
           )}

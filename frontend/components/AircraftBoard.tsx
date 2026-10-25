@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { AirportItem, AircraftItem, AircraftCategory } from "@/lib/schemas";
+import type {
+  AirportItem,
+  AircraftItem,
+  AircraftCategory,
+} from "@/lib/schemas";
 import { useAircraftFeed } from "@/hooks/useAircraftFeed";
 import { FilterBar } from "./FilterBar";
 import { StatusLine } from "./StatusLine";
@@ -60,19 +64,18 @@ export function AircraftBoard({
   initialShowAll = false,
   initialRadius = LIMITS.DEFAULT_RADIUS_NM,
 }: AircraftBoardProps) {
-  const [categories, setCategories] = useState<AircraftCategory[]>(initialCategories);
+  const [categories, setCategories] =
+    useState<AircraftCategory[]>(initialCategories);
   const [showAll, setShowAll] = useState<boolean>(initialShowAll);
   const [radius, setRadius] = useState<number>(initialRadius);
   const [showMap, setShowMap] = useState<boolean>(false);
 
-  const { data, status, error, lastUpdated, isStale, refresh } = useAircraftFeed(
-    airport.icao,
-    {
+  const { data, status, error, lastUpdated, isStale, refresh } =
+    useAircraftFeed(airport.icao, {
       categories: categories.length > 0 ? categories : undefined,
       all: showAll,
       radius,
-    }
-  );
+    });
 
   const rawList = data?.aircraft || [];
   const sortedList = sortAircraft(rawList);
@@ -102,7 +105,9 @@ export function AircraftBoard({
             onClick={() => setShowMap(!showMap)}
             className={`btn btn-toggle-map ${showMap ? "btn-map-active" : ""}`}
             aria-pressed={showMap}
-            aria-label={showMap ? "Hide interactive map" : "Show interactive map"}
+            aria-label={
+              showMap ? "Hide interactive map" : "Show interactive map"
+            }
           >
             {showMap ? "🗺 Hide Map" : "🗺 Show Map"}
           </button>
@@ -129,7 +134,10 @@ export function AircraftBoard({
       <div className="aircraft-list-wrapper">
         {status === "loading" && !data ? (
           <div className="board-loading-box" role="status">
-            <p>Scanning ADS-B radar receiver feeds near {airport.name} ({airport.icao})...</p>
+            <p>
+              Scanning ADS-B radar receiver feeds near {airport.name}
+              {airport.city ? `, ${airport.city}` : ""} ({airport.icao})...
+            </p>
           </div>
         ) : sortedList.length === 0 ? (
           <div className="board-empty-box" role="status">
@@ -138,8 +146,8 @@ export function AircraftBoard({
             </h2>
             <p className="empty-desc">
               {showAll
-                ? `No aircraft detected within ${radius} NM of ${airport.name}.`
-                : `No big, rare, or military aircraft detected within ${radius} NM of ${airport.name}.`}
+                ? `No aircraft detected within ${radius} NM of ${airport.name}${airport.city ? ` (${airport.city})` : ""}.`
+                : `No big, rare, or military aircraft detected within ${radius} NM of ${airport.name}${airport.city ? ` (${airport.city})` : ""}.`}
             </p>
             <p className="empty-hint">
               This page automatically checks for updates every 15 seconds.

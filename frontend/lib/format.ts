@@ -5,7 +5,7 @@ import { PATTERNS } from "./constants";
  */
 export function formatAltitude(
   altFt: number | null | undefined,
-  onGround?: boolean | null
+  onGround?: boolean | null,
 ): string {
   if (onGround === true) {
     return "On ground";
@@ -73,7 +73,24 @@ export function formatHeading(trackDeg: number | null | undefined): string {
     return "Unknown";
   }
   const normalized = Math.round(((trackDeg % 360) + 360) % 360);
-  const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const directions = [
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+  ];
   const index = Math.round(normalized / 22.5) % 16;
   return `${normalized}° (${directions[index]})`;
 }
@@ -85,7 +102,7 @@ export function formatHeading(trackDeg: number | null | undefined): string {
 export function formatETA(
   phase: string,
   speedKt: number | null | undefined,
-  distKm: number | null | undefined
+  distKm: number | null | undefined,
 ): string | null {
   if (phase !== "approach") {
     return null;
@@ -116,7 +133,8 @@ export function formatETA(
  * Format human readable 'Updated N seconds ago' or timestamp
  */
 export function formatUpdatedAgo(dateInput: string | Date | number): string {
-  const time = typeof dateInput === "number" ? dateInput : new Date(dateInput).getTime();
+  const time =
+    typeof dateInput === "number" ? dateInput : new Date(dateInput).getTime();
   if (isNaN(time)) {
     return "Updated recently";
   }
@@ -136,7 +154,9 @@ export function formatUpdatedAgo(dateInput: string | Date | number): string {
 /**
  * Build a safe, validated photo search URL for an aircraft registration
  */
-export function getPhotoSearchUrl(registration: string | null | undefined): string | null {
+export function getPhotoSearchUrl(
+  registration: string | null | undefined,
+): string | null {
   if (!registration || typeof registration !== "string") {
     return null;
   }

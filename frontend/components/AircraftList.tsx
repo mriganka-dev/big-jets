@@ -104,7 +104,10 @@ export function AircraftList({
         <div className="panel-title-group">
           <h2 className="panel-title">Tracked Aircraft</h2>
           <span className="panel-badge tabular-nums">
-            {sortedList.length} shown {totalCount > sortedList.length ? `(of ${totalCount} in ${radius} NM)` : `(${radius} NM)`}
+            {sortedList.length} shown{" "}
+            {totalCount > sortedList.length
+              ? `(of ${totalCount} live on globe)`
+              : `(live on globe)`}
           </span>
         </div>
         <button
@@ -132,7 +135,10 @@ export function AircraftList({
       </div>
 
       <div className="panel-sorting-hint">
-        <span>Order: Landing approach first, then ground &amp; departing, then nearest</span>
+        <span>
+          Order: Landing approach first, then ground &amp; departing, then
+          nearest
+        </span>
       </div>
 
       <div className="panel-body aircraft-list-body">
@@ -178,7 +184,8 @@ export function AircraftList({
             </span>
             <p className="panel-empty-title">No Aircraft in Range</p>
             <p className="panel-empty-desc">
-              No matching flights detected within {radius} NM of this airport. Try increasing radius or selecting All Traffic.
+              No matching flights detected within {radius} NM of this airport.
+              Try increasing radius or selecting All Traffic.
             </p>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { AIRPORTS, CATEGORIES, LIMITS } from "../constants.js";
+import { CATEGORIES, LIMITS } from "../constants.js";
+import { hasAirport } from "./airports.js";
 
 const validCategories = Object.values(CATEGORIES);
 
@@ -7,9 +8,33 @@ export const icaoSchema = z
   .string()
   .regex(/^[A-Za-z]{4}$/, "ICAO must be exactly 4 letters")
   .transform((val) => val.toUpperCase())
-  .refine((val) => Object.hasOwn(AIRPORTS, val), {
+  .refine((val) => hasAirport(val), {
     message: "Unknown airport ICAO code",
   });
+
+export const airportCodeParamSchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Za-z]{4}$/, "ICAO must be exactly 4 letters")
+  .transform((val) => val.toUpperCase());
+
+export const airportSearchQuerySchema = z.object({
+  q: z
+    .string({ required_error: "Search query 'q' is required" })
+    .trim()
+    .min(2, "Search query must be at least 2 characters")
+    .max(40, "Search query must not exceed 40 characters")
+    .regex(
+      /^[\p{L}0-9\s\-'.',]+$/u,
+      "Search query contains invalid characters"
+    ),
+  limit: z.coerce
+    .number()
+    .int("Limit must be an integer")
+    .min(1, "Limit must be at least 1")
+    .max(20, "Limit cannot exceed 20")
+    .default(10),
+});
 
 export const radiusSchema = z.coerce
   .number()

@@ -75,11 +75,17 @@ export function AirportPicker({ airports }: AirportPickerProps) {
                   <div className="airport-codes">
                     <span className="code-badge code-icao">{airport.icao}</span>
                     {airport.iata && (
-                      <span className="code-badge code-iata">{airport.iata}</span>
+                      <span className="code-badge code-iata">
+                        {airport.iata}
+                      </span>
                     )}
                   </div>
                 </div>
-                <p className="airport-fullname">{airport.fullName}</p>
+                <p className="airport-fullname">
+                  {airport.city
+                    ? `${airport.city}, ${airport.country}`
+                    : airport.country}
+                </p>
                 <span className="view-board-hint" aria-hidden="true">
                   View Live Traffic &rarr;
                 </span>

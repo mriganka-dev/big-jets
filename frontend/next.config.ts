@@ -6,9 +6,9 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${!isProd ? " 'unsafe-eval'" : ""};
-  style-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' data: https://*.tile.openstreetmap.org;
-  font-src 'self';
+  font-src 'self' https://fonts.gstatic.com data:;
   connect-src 'self' ${apiUrl};
   frame-ancestors 'none';
   base-uri 'self';

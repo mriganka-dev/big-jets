@@ -9,6 +9,15 @@ export const aircraftLimiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 
+// Rate limiter for airport search (60 req / min)
+export const airportSearchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later." },
+});
+
 // Rate limiter for email actions (10 req / 15 min)
 export const emailActionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

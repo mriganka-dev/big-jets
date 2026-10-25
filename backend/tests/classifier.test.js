@@ -5,7 +5,7 @@ import {
   determinePhase,
   formatAircraft,
 } from "../src/utils/classifier.js";
-import { CATEGORIES, AIRPORTS } from "../src/constants.js";
+import { CATEGORIES } from "../src/constants.js";
 
 test("Classifier: Aircraft categorization", () => {
   // A380 is both BIG and RARE

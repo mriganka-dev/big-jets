@@ -18,7 +18,7 @@ interface UseAircraftFeedResult {
 
 export function useAircraftFeed(
   icao: string,
-  options: AircraftQueryOptions
+  options: AircraftQueryOptions,
 ): UseAircraftFeedResult {
   const [data, setData] = useState<AircraftResponse | null>(null);
   const [status, setStatus] = useState<FeedStatus>("loading");
@@ -28,7 +28,9 @@ export function useAircraftFeed(
 
   const radius = options.radius;
   const all = options.all;
-  const categoriesJoined = options.categories ? options.categories.join(",") : "";
+  const categoriesJoined = options.categories
+    ? options.categories.join(",")
+    : "";
 
   // References to handle polling, cancellation, and concurrency
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -63,7 +65,7 @@ export function useAircraftFeed(
         const result = await fetchAircraft(
           icao,
           { radius, all, categories: parsedCategories },
-          signal
+          signal,
         );
 
         setData(result);
@@ -81,19 +83,21 @@ export function useAircraftFeed(
         if (err instanceof ApiError) {
           setError(err.message);
         } else {
-          setError("Unable to update live aircraft data. Telemetry service may be temporarily unavailable.");
+          setError(
+            "Unable to update live aircraft data. Telemetry service may be temporarily unavailable.",
+          );
         }
 
         // Exponential backoff between 30s and 120s
         backoffDelayRef.current = Math.min(
           Math.max(backoffDelayRef.current * 2, LIMITS.MIN_BACKOFF_MS),
-          LIMITS.MAX_BACKOFF_MS
+          LIMITS.MAX_BACKOFF_MS,
         );
       } finally {
         isFetchingRef.current = false;
       }
     },
-    [icao, radius, all, categoriesJoined]
+    [icao, radius, all, categoriesJoined],
   );
 
   useEffect(() => {

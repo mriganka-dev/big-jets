@@ -3,7 +3,10 @@ import type { AirportItem } from "./schemas";
 /**
  * Filter airports by search term matching name, ICAO, IATA, or full name
  */
-export function filterAirports(airports: AirportItem[], query: string): AirportItem[] {
+export function filterAirports(
+  airports: AirportItem[],
+  query: string,
+): AirportItem[] {
   const cleanQuery = query.trim().toLowerCase();
   if (!cleanQuery) {
     return airports;
@@ -13,8 +16,8 @@ export function filterAirports(airports: AirportItem[], query: string): AirportI
     (airport) =>
       airport.name.toLowerCase().includes(cleanQuery) ||
       airport.icao.toLowerCase().includes(cleanQuery) ||
-      airport.iata.toLowerCase().includes(cleanQuery) ||
-      airport.fullName.toLowerCase().includes(cleanQuery)
+      (airport.iata && airport.iata.toLowerCase().includes(cleanQuery)) ||
+      (airport.city && airport.city.toLowerCase().includes(cleanQuery)),
   );
 }
 
@@ -23,7 +26,7 @@ export function filterAirports(airports: AirportItem[], query: string): AirportI
  */
 export function findAirportByIcao(
   airports: AirportItem[],
-  icao: string
+  icao: string,
 ): AirportItem | undefined {
   const target = icao.trim().toUpperCase();
   return airports.find((a) => a.icao === target);

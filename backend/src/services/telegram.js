@@ -1,5 +1,6 @@
 import { config } from "../config.js";
-import { AIRPORTS, CATEGORIES } from "../constants.js";
+import { CATEGORIES } from "../constants.js";
+import { getAirport } from "../utils/airports.js";
 import { logger } from "../utils/logger.js";
 import { generateToken, hashToken } from "../utils/tokens.js";
 import {
@@ -246,14 +247,13 @@ export async function handleUpdate(update) {
 }
 
 async function handleHelpCommand(chatId) {
-  const airportCodes = Object.keys(AIRPORTS).join(", ");
   const helpText = [
     "<b>Big Jets Alert Bot</b>",
     "",
     "<b>Commands:</b>",
     "• <code>/watch &lt;ICAO&gt; &lt;what&gt; [event] [via]</code>",
     "  Add an alert subscription for an airport.",
-    "  • <b>ICAO:</b> " + airportCodes,
+    "  • <b>ICAO:</b> Any 4-letter airport ICAO code (e.g. <code>VECC</code>, <code>EGLL</code>, <code>KJFK</code>)",
     "  • <b>what:</b> <code>all</code>, <code>big</code>, <code>rare</code>, <code>fighters</code>, <code>military</code>, <code>vip</code>, type code (e.g. <code>A388</code>), or reg (e.g. <code>VT-ALK</code>)",
     "  • <b>event:</b> <code>land</code>, <code>takeoff</code>, <code>both</code>, or <code>nearby [radiusKm]</code> (default: <code>both</code>, or <code>nearby 50</code> for fighters/military)",
     "  • <b>via:</b> <code>telegram</code>, <code>email</code>, or <code>both</code> (default: <code>telegram</code>)",
@@ -266,7 +266,8 @@ async function handleHelpCommand(chatId) {
     "• <code>/email off</code> - Disable email alerts",
     "",
     "<i>Example:</i> <code>/watch VECC all</code>",
-    "<i>Example:</i> <code>/watch VECC fighters nearby 50</code>",
+    "<i>Example:</i> <code>/watch EGLL all</code>",
+    "<i>Example:</i> <code>/watch KJFK fighters nearby 50</code>",
     "<i>Example:</i> <code>/watch VIDP A388 land both</code>",
   ].join("\n");
 
@@ -285,10 +286,9 @@ async function handleWatchCommand(chatId, user, args) {
   const rawIcao = args[0].toUpperCase();
   const icaoResult = icaoSchema.safeParse(rawIcao);
   if (!icaoResult.success) {
-    const known = Object.keys(AIRPORTS).join(", ");
     await sendMessage(
       chatId,
-      `Invalid airport ICAO <code>${escapeHtml(rawIcao)}</code>. Supported airports: ${known}`
+      `Unknown airport ICAO <code>${escapeHtml(rawIcao)}</code>. Please specify a valid 4-letter airport ICAO code (e.g. VECC, EGLL, KJFK).`
     );
     return;
   }
@@ -401,10 +401,13 @@ async function handleWatchCommand(chatId, user, args) {
     const eventDesc =
       event === "nearby" ? `nearby (${newSub.radiusKm} km)` : event;
 
+    const airport = getAirport(icao);
+    const airportName = airport?.name || icao;
+
     await sendMessage(
       chatId,
       `<b>Watch created</b>\n` +
-        `Airport: <b>${icao}</b> (${AIRPORTS[icao].name})\n` +
+        `Airport: <b>${icao}</b> (${escapeHtml(airportName)})\n` +
         `Target: <b>${escapeHtml(targetDesc)}</b>\n` +
         `Event: <b>${eventDesc}</b>\n` +
         `Via: <b>${channel}</b>`
