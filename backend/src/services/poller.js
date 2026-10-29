@@ -1,7 +1,8 @@
 import { config } from "../config.js";
-import { AIRPORTS, LIMITS } from "../constants.js";
+import { LIMITS } from "../constants.js";
+import { getAirport } from "../utils/airports.js";
 import { logger } from "../utils/logger.js";
-import { listWatchedAirports } from "../store/store.js";
+import { listWatchedAirportsByFrequency } from "../store/store.js";
 import { fetchAircraftForAirport } from "../utils/adsb.js";
 import { processAirportSnapshot } from "./detector.js";
 
@@ -14,21 +15,33 @@ let consecutiveErrors = 0;
 
 export async function pollOnce() {
   if (isPolling) {
-    return;
+    return 0;
   }
 
   isPolling = true;
+  const startTime = Date.now();
 
   try {
-    const watchedAirports = listWatchedAirports();
+    const watchedEntries = listWatchedAirportsByFrequency();
 
-    if (watchedAirports.length === 0) {
+    if (watchedEntries.length === 0) {
       consecutiveErrors = 0;
-      return;
+      return 0;
     }
 
-    for (const icao of watchedAirports) {
-      const airport = AIRPORTS[icao];
+    const maxAirports = LIMITS.MAX_POLLER_AIRPORTS || 25;
+    if (watchedEntries.length > maxAirports) {
+      logger.warn(
+        `Poller: ${watchedEntries.length} airports watched, exceeding cap of ${maxAirports}. Polling top ${maxAirports} most-subscribed airports.`
+      );
+    }
+
+    const airportsToPoll = watchedEntries.slice(0, maxAirports);
+    const spreadMs = LIMITS.POLLER_SPREAD_MS || 1000;
+
+    for (let i = 0; i < airportsToPoll.length; i++) {
+      const { airport: icao } = airportsToPoll[i];
+      const airport = getAirport(icao);
       if (!airport) {
         logger.warn(`Poller: Unknown airport code watched: ${icao}`);
         continue;
@@ -42,7 +55,11 @@ export async function pollOnce() {
         processAirportSnapshot(airport, aircraftList);
       } catch (err) {
         logger.error(`Poller error for airport ${icao}: ${err.message}`);
-        throw err;
+      }
+
+      // Spread upstream requests out if more airports remain
+      if (i < airportsToPoll.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, spreadMs));
       }
     }
 
@@ -55,14 +72,16 @@ export async function pollOnce() {
   } finally {
     isPolling = false;
   }
+
+  return Date.now() - startTime;
 }
 
-function scheduleNextPoll() {
+function scheduleNextPoll(lastDurationMs = 0) {
   if (!isRunning) {
     return;
   }
 
-  let delayMs = config.pollMs;
+  let delayMs;
   if (consecutiveErrors > 0) {
     delayMs = Math.min(
       config.pollMs * Math.pow(2, consecutiveErrors),
@@ -71,12 +90,15 @@ function scheduleNextPoll() {
     logger.info(
       `Retrying ADS-B poll in ${Math.round(delayMs / 1000)}s due to backoff...`
     );
+  } else {
+    // Keep 20s cycle by deducting duration already spent in this cycle
+    delayMs = Math.max(0, config.pollMs - lastDurationMs);
   }
 
   pollTimer = setTimeout(async () => {
     if (!isRunning) return;
-    await pollOnce();
-    scheduleNextPoll();
+    const duration = await pollOnce();
+    scheduleNextPoll(duration);
   }, delayMs);
 }
 
@@ -89,8 +111,8 @@ export function startPoller() {
   logger.info(`Starting ADS-B poller (interval: ${config.pollMs}ms)...`);
 
   // Execute initial poll immediately then schedule subsequent runs
-  pollOnce().finally(() => {
-    scheduleNextPoll();
+  pollOnce().then((duration) => {
+    scheduleNextPoll(duration);
   });
 }
 

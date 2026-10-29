@@ -1,69 +1,81 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { fetchAirports, fetchAirport, ApiError } from "@/lib/api";
+import { DEFAULT_AIRPORT_ICAO } from "@/lib/constants";
+import { RadarView } from "@/components/RadarView";
+import type { AirportItem } from "@/lib/schemas";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+// Revalidate airport cache periodically
+export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Big Jets | Live Flight Radar Map",
+    description:
+      "Full-screen live flight radar tracking big, rare, and military aircraft near airports using open ADS-B telemetry.",
+  };
+}
+
+export default async function HomePage() {
+  let airports: AirportItem[] = [];
+  let fetchError: string | null = null;
+
+  try {
+    const data = await fetchAirports();
+    airports = data.airports;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      fetchError = err.message;
+    } else {
+      fetchError =
+        "Unable to connect to the backend airport telemetry service.";
+    }
+  }
+
+  if (fetchError || airports.length === 0) {
+    return (
+      <div
+        className="container"
+        style={{ paddingTop: "4rem", textAlign: "center" }}
+      >
+        <div
+          className="alert-box alert-error"
+          role="alert"
+          style={{ maxWidth: "560px", margin: "0 auto" }}
+        >
+          <h1
+            className="page-title"
+            style={{ marginBottom: "0.5rem" }}
+          >
+            Data Service Unavailable
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p style={{ marginBottom: "1.5rem" }}>
+            {fetchError ||
+              "No supported airports were returned by the backend service."}
           </p>
+          <Link href="/" className="btn btn-primary btn-sm">
+            Retry Connection
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // Validate configured default airport via fetchAirport
+  const configuredDefault = (
+    process.env.NEXT_PUBLIC_DEFAULT_AIRPORT ||
+    DEFAULT_AIRPORT_ICAO ||
+    "VECC"
+  )
+    .trim()
+    .toUpperCase();
+
+  let targetAirport: AirportItem = airports[0];
+  try {
+    targetAirport = await fetchAirport(configuredDefault);
+  } catch {
+    targetAirport = airports[0];
+  }
+
+  return <RadarView airport={targetAirport} allAirports={airports} />;
 }

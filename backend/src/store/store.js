@@ -81,7 +81,7 @@ function writeStoreAtomic(data) {
   const tmpPath = `${storeFilePath}.tmp`;
   const jsonContent = JSON.stringify(data, null, 2);
 
-  fs.writeFileSync(tmpPath, jsonContent, "utf8");
+  fs.writeFileSync(tmpPath, jsonContent, { encoding: "utf8", mode: 0o600 });
   fs.renameSync(tmpPath, storeFilePath);
 }
 
@@ -181,6 +181,11 @@ export function setUserEmail(userId, email) {
   user.emailVerified = false;
   user.emailUnsubscribed = false;
   user.emailBounced = false;
+
+  // Delete verify tokens for this user when email is changed or switched off
+  store.emailTokens = store.emailTokens.filter(
+    (t) => !(t.userId === user.id && t.purpose === "verify")
+  );
 
   scheduleSave();
   return clone(user);
@@ -289,6 +294,23 @@ export function listWatchedAirports() {
   return Array.from(watchedSet);
 }
 
+export function listWatchedAirportsByFrequency() {
+  const activeUserIds = new Set(
+    store.users.filter((u) => !u.paused).map((u) => u.id)
+  );
+
+  const counts = new Map();
+  for (const sub of store.subscriptions) {
+    if (activeUserIds.has(sub.userId)) {
+      counts.set(sub.airport, (counts.get(sub.airport) || 0) + 1);
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([airport, count]) => ({ airport, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // ==================== ALERT TRACKING ====================
 
 export function wasAlertSent({ userId, hex, event, channel, airport }) {
@@ -297,6 +319,7 @@ export function wasAlertSent({ userId, hex, event, channel, airport }) {
   const targetEvent = String(event);
   const targetChannel = String(channel);
   const targetAirport = airport ? String(airport).toUpperCase() : null;
+  const cutoffTime = Date.now() - LIMITS.ALERT_DEDUP_WINDOW_MS;
 
   return store.alertsSent.some((a) => {
     if (
@@ -310,7 +333,8 @@ export function wasAlertSent({ userId, hex, event, channel, airport }) {
     if (targetAirport && a.airport && a.airport !== targetAirport) {
       return false;
     }
-    return true;
+    const alertTime = new Date(a.at).getTime();
+    return alertTime >= cutoffTime;
   });
 }
 
@@ -331,10 +355,39 @@ export function recordAlert({ userId, hex, event, airport, channel }) {
 
 // ==================== EMAIL TOKEN OPERATIONS ====================
 
-export function saveEmailToken(userId, tokenHash, expiresAt) {
+export function saveEmailToken(
+  userId,
+  tokenHash,
+  expiresAt,
+  purpose,
+  email = null
+) {
+  const targetUserId = String(userId);
+  const targetPurpose = String(purpose);
+
+  // When saving an unsubscribe token, keep at most 5 per user (remove oldest)
+  if (targetPurpose === "unsubscribe") {
+    const userUnsubIndices = [];
+    store.emailTokens.forEach((t, i) => {
+      if (t.userId === targetUserId && t.purpose === "unsubscribe") {
+        userUnsubIndices.push(i);
+      }
+    });
+
+    while (userUnsubIndices.length >= 5) {
+      const removeIdx = userUnsubIndices.shift();
+      store.emailTokens.splice(removeIdx, 1);
+      for (let j = 0; j < userUnsubIndices.length; j++) {
+        userUnsubIndices[j]--;
+      }
+    }
+  }
+
   const record = {
-    userId: String(userId),
+    userId: targetUserId,
     tokenHash: String(tokenHash),
+    purpose: targetPurpose,
+    email: email ? String(email).trim().toLowerCase() : null,
     expiresAt:
       expiresAt instanceof Date ? expiresAt.toISOString() : String(expiresAt),
   };
@@ -344,11 +397,14 @@ export function saveEmailToken(userId, tokenHash, expiresAt) {
   return clone(record);
 }
 
-export function consumeEmailToken(tokenHash) {
-  if (!tokenHash) return null;
+export function consumeEmailToken(tokenHash, purpose) {
+  if (!tokenHash || !purpose) return null;
 
   const now = Date.now();
   const index = store.emailTokens.findIndex((t) => {
+    if (t.purpose !== purpose) {
+      return false;
+    }
     if (!compareHashes(t.tokenHash, tokenHash)) {
       return false;
     }

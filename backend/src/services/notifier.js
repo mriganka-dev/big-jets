@@ -139,10 +139,15 @@ export async function notify(sub, user, event) {
         const rawUnsubToken = generateToken();
         const unsubTokenHash = hashToken(rawUnsubToken);
         const unsubExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        saveEmailToken(user.id, unsubTokenHash, unsubExpiresAt);
 
         const sent = await sendAlertEmail(user, event, rawUnsubToken);
         if (sent) {
+          saveEmailToken(
+            user.id,
+            unsubTokenHash,
+            unsubExpiresAt,
+            "unsubscribe"
+          );
           recordAlert({
             userId: user.id,
             hex,

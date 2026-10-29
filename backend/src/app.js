@@ -45,6 +45,7 @@ app.use(
 
 // Strict body limit to prevent large payload attacks
 app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: false, limit: "10kb" }));
 
 // API routes
 app.use("/api", healthRoutes);
