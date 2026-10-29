@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, Suspense, useCallback } from "react";
+import { useState, useMemo, Suspense, useCallback, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import type { AirportItem } from "@/lib/schemas";
+import type { AirportItem, FlightRouteInfo } from "@/lib/schemas";
+import { fetchFlightRoute } from "@/lib/api";
 import { useAircraftFeed } from "@/hooks/useAircraftFeed";
 import { AirportSearch } from "./AirportSearch";
 import { FilterChips } from "./FilterChips";
@@ -70,6 +71,8 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
     useState<string[]>(initialCategories);
   const [showAllTraffic, setShowAllTraffic] = useState<boolean>(initialShowAll);
   const [mapError, setMapError] = useState<boolean>(false);
+  const [selectedRoute, setSelectedRoute] = useState<FlightRouteInfo | null>(null);
+  const [fitRouteTrigger, setFitRouteTrigger] = useState<number>(0);
 
   // Connect live data feed (15s polling, tab visibility pause, error backoff)
   // Request all=true from backend; client narrows by category
@@ -97,6 +100,34 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       allAircraft.find((ac) => ac.hex.toUpperCase() === selectedHex) ?? null
     );
   }, [allAircraft, selectedHex]);
+
+  // Fetch flight route whenever selected aircraft callsign changes
+  useEffect(() => {
+    if (!selectedAircraft?.callsign) {
+      setSelectedRoute(null);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    fetchFlightRoute(selectedAircraft.callsign, controller.signal)
+      .then((route) => {
+        if (active) {
+          setSelectedRoute(route);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSelectedRoute(null);
+        }
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [selectedAircraft?.callsign]);
 
   const maxMarkerCapHit = filteredAircraft.length > 2000;
 
@@ -187,6 +218,8 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
             airport={airport}
             aircraft={filteredAircraft}
             selectedHex={selectedHex}
+            selectedRoute={selectedRoute}
+            fitRouteTrigger={fitRouteTrigger}
             onSelectAircraft={handleSelectAircraft}
             maxMarkerCapHit={maxMarkerCapHit}
           />
@@ -305,6 +338,8 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       <AircraftPanel
         aircraft={selectedAircraft}
         selectedHex={selectedHex}
+        route={selectedRoute}
+        onFitRoute={() => setFitRouteTrigger(Date.now())}
         onClose={handleCloseAircraftPanel}
       />
 

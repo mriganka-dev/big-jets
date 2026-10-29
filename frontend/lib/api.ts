@@ -3,10 +3,12 @@ import {
   airportsResponseSchema,
   airportSearchResponseSchema,
   aircraftResponseSchema,
+  flightRouteResponseSchema,
   type AirportItem,
   type AirportsResponse,
   type AircraftResponse,
   type AircraftCategory,
+  type FlightRouteInfo,
 } from "./schemas";
 import { LIMITS, PATTERNS, CATEGORIES } from "./constants";
 
@@ -389,3 +391,60 @@ export async function fetchAirport(
     cleanup();
   }
 }
+
+// Client-side cache for flight routes to avoid repetitive network requests
+const routeClientCache = new Map<string, { timestamp: number; data: FlightRouteInfo | null }>();
+const CLIENT_ROUTE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Fetches flight route, airline branding, origin & destination for a callsign.
+ */
+export async function fetchFlightRoute(
+  callsign: string,
+  userSignal?: AbortSignal,
+): Promise<FlightRouteInfo | null> {
+  if (!callsign || typeof callsign !== "string") return null;
+  const clean = callsign.trim().toUpperCase();
+  if (!/^[A-Z0-9]{2,8}$/.test(clean)) return null;
+
+  const now = Date.now();
+  const cached = routeClientCache.get(clean);
+  if (cached && now - cached.timestamp < CLIENT_ROUTE_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const { signal, cleanup } = createCombinedSignal(userSignal, 4000);
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/routes/${encodeURIComponent(clean)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal,
+    });
+
+    if (res.status === 404) {
+      routeClientCache.set(clean, { timestamp: now, data: null });
+      return null;
+    }
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const data: unknown = await res.json();
+    const parsed = flightRouteResponseSchema.safeParse(data);
+    if (!parsed.success) {
+      return null;
+    }
+
+    routeClientCache.set(clean, { timestamp: now, data: parsed.data.route });
+    return parsed.data.route;
+  } catch {
+    return null;
+  } finally {
+    cleanup();
+  }
+}
+

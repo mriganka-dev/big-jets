@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { AircraftItem } from "@/lib/schemas";
+import { useEffect, useRef, useState } from "react";
+import type { AircraftItem, FlightRouteInfo } from "@/lib/schemas";
 import { PATTERNS, PHASE_LABELS, type FlightPhaseKey } from "@/lib/constants";
 import { CategoryBadge } from "./CategoryBadge";
 import {
@@ -12,20 +12,31 @@ import {
   formatVerticalRate,
   formatETA,
 } from "@/lib/format";
+import { calculateFlightProgress } from "@/lib/geo";
 
 interface AircraftPanelProps {
   aircraft: AircraftItem | null;
   selectedHex?: string | null;
+  route?: FlightRouteInfo | null;
+  onFitRoute?: () => void;
   onClose: () => void;
 }
 
 export function AircraftPanel({
   aircraft,
   selectedHex,
+  route,
+  onFitRoute,
   onClose,
 }: AircraftPanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  // Reset logo failure on route/hex change
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [route?.callsign, selectedHex]);
 
   // Close on Escape key
   useEffect(() => {
@@ -56,7 +67,22 @@ export function AircraftPanel({
   const registration = aircraft?.reg?.trim() || null;
   const typeCode = aircraft?.type?.trim() || "Unknown Type";
   const model = aircraft?.model?.trim() || "Unspecified Model";
-  const operator = aircraft?.operator?.trim() || "Private / Community ADS-B";
+
+  // Airline resolution (Priority: route airline -> aircraft airline -> operator -> fallback)
+  const airlineObj = route?.airline || aircraft?.airline;
+  const airlineName =
+    airlineObj?.name ||
+    aircraft?.operator ||
+    (aircraft?.categories?.includes("MIL_FIGHTER") || aircraft?.categories?.includes("MIL_OTHER")
+      ? "Military Air Operations"
+      : aircraft?.categories?.includes("VIP_JET")
+      ? "Private Aviation"
+      : "Commercial / General ADS-B");
+
+  const airlineLogoUrl = !logoFailed ? airlineObj?.logoUrl : null;
+  const airlineCountry = airlineObj?.country || null;
+  const flightNumberIata = route?.callsignIata || null;
+
   const phaseLabel = aircraft?.phase
     ? PHASE_LABELS[aircraft.phase as FlightPhaseKey] || aircraft.phase
     : "Overflying";
@@ -85,6 +111,33 @@ export function AircraftPanel({
   const squawkCode = aircraft?.squawk || "N/A";
   const isEmergencySquawk = ["7500", "7600", "7700"].includes(squawkCode);
 
+  // Origin & Destination details
+  const hasFullRoute = Boolean(route?.origin && route?.destination);
+  const originIata = route?.origin?.iata || route?.origin?.icao || (aircraft?.onGround ? "GND" : "AIR");
+  const originCity = route?.origin?.city || route?.origin?.name || (aircraft?.onGround ? "On Ground" : "Airborne");
+  const originAirportName = route?.origin?.name || "";
+
+  const destIata = route?.destination?.iata || route?.destination?.icao || (eta ? "ARR" : "FLT");
+  const destCity = route?.destination?.city || route?.destination?.name || (eta ? `ETA ${eta}` : "In Flight");
+  const destAirportName = route?.destination?.name || "";
+
+  // Dynamic Flight Progress Calculation
+  let progressPercent = 50;
+  if (
+    route?.origin?.lat != null &&
+    route?.origin?.lon != null &&
+    route?.destination?.lat != null &&
+    route?.destination?.lon != null &&
+    aircraft?.lat != null &&
+    aircraft?.lon != null
+  ) {
+    progressPercent = calculateFlightProgress(
+      { lat: route.origin.lat, lon: route.origin.lon },
+      { lat: aircraft.lat, lon: aircraft.lon },
+      { lat: route.destination.lat, lon: route.destination.lon },
+    );
+  }
+
   return (
     <aside
       ref={panelRef}
@@ -96,16 +149,50 @@ export function AircraftPanel({
       {/* Top Yellow FR24 Accent Stripe */}
       <div className="fr24-panel-stripe" aria-hidden="true" />
 
-      {/* Header with Callsign, Registration & Airline */}
+      {/* Header with Callsign, Registration & Airline Brand */}
       <div className="detail-header fr24-header">
         <div className="detail-title-group">
-          <div className="fr24-operator-tag">{operator}</div>
+          {/* Airline Brand Badge with Official Logo */}
+          <div className="fr24-airline-brand">
+            {airlineLogoUrl ? (
+              <img
+                src={airlineLogoUrl}
+                alt={`${airlineName} logo`}
+                className="fr24-airline-logo"
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
+              />
+            ) : (
+              <div className="fr24-airline-icon-fallback" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                </svg>
+              </div>
+            )}
+            <div className="fr24-airline-meta">
+              <span className="fr24-airline-name">{airlineName}</span>
+              {airlineCountry && (
+                <span className="fr24-airline-country">{airlineCountry}</span>
+              )}
+            </div>
+          </div>
+
           <div className="detail-callsign-reg">
-            <h2 className="detail-callsign fr24-callsign tabular-nums">{callsign}</h2>
+            <h2 className="detail-callsign fr24-callsign tabular-nums">
+              {flightNumberIata ? (
+                <>
+                  <span className="fr24-iata-flight">{flightNumberIata}</span>
+                  <span className="fr24-icao-callsign">/ {callsign}</span>
+                </>
+              ) : (
+                callsign
+              )}
+            </h2>
             {registration && (
               <span className="detail-reg fr24-reg tabular-nums">{registration}</span>
             )}
           </div>
+
           <div className="fr24-meta-pills">
             <span className="detail-hex tabular-nums">HEX: {hex}</span>
             {typeCode && <span className="fr24-type-pill tabular-nums">{typeCode}</span>}
@@ -137,28 +224,68 @@ export function AircraftPanel({
       </div>
 
       <div className="detail-body fr24-body">
-        {/* Route / Flight Status Visualizer */}
+        {/* Flight Route / Origin ➔ Destination Visualizer */}
         <div className="detail-section fr24-route-card">
           <div className="fr24-route-row">
-            <div className="fr24-route-node">
-              <span className="fr24-node-code">ORIGIN</span>
-              <span className="fr24-node-sub">{aircraft?.onGround ? "On Ground" : "Airborne"}</span>
+            {/* Origin */}
+            <div className="fr24-route-node" title={originAirportName}>
+              <span className="fr24-node-code">{originIata}</span>
+              <span className="fr24-node-city">{originCity}</span>
+              {originAirportName && originAirportName !== originCity && (
+                <span className="fr24-node-sub">{originAirportName}</span>
+              )}
             </div>
+
+            {/* Progress track */}
             <div className="fr24-route-progress">
+              <div
+                className="fr24-route-line-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
               <div className="fr24-route-line" />
-              <div className="fr24-route-plane">
+              <div
+                className="fr24-route-plane"
+                style={{ left: `${progressPercent}%` }}
+                title={`Flight Progress: ~${progressPercent}%`}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
                 </svg>
               </div>
             </div>
-            <div className="fr24-route-node fr24-node-right">
-              <span className="fr24-node-code">DEST</span>
-              <span className="fr24-node-sub">{eta ? `ETA ${eta}` : "In Flight"}</span>
+
+            {/* Destination */}
+            <div className="fr24-route-node fr24-node-right" title={destAirportName}>
+              <span className="fr24-node-code">{destIata}</span>
+              <span className="fr24-node-city">{destCity}</span>
+              {destAirportName && destAirportName !== destCity && (
+                <span className="fr24-node-sub">{destAirportName}</span>
+              )}
             </div>
           </div>
+
+          {/* Route Action Controls */}
+          {hasFullRoute && onFitRoute && (
+            <div className="fr24-route-actions">
+              <button
+                type="button"
+                onClick={onFitRoute}
+                className="fr24-fit-route-btn"
+                title="Fit entire flight path on the map"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+                <span>View Full Flight Path ({originIata} ➔ {destIata})</span>
+              </button>
+            </div>
+          )}
+
           <div className="fr24-status-strip">
             <span className="detail-phase-tag fr24-status-tag">{phaseLabel}</span>
+            {hasFullRoute && (
+              <span className="fr24-progress-pill">{progressPercent}% Flown</span>
+            )}
             {aircraft?.categories && aircraft.categories.length > 0 && (
               <div className="detail-categories">
                 {aircraft.categories.map((cat) => (
@@ -237,7 +364,7 @@ export function AircraftPanel({
             <span className="detail-model-name">{model}</span>
             <span className="detail-typecode">{typeCode}</span>
           </div>
-          <p className="detail-operator-name">{operator}</p>
+          <p className="detail-operator-name">{airlineName}</p>
         </div>
 
         {/* Photo Search Link & Community ADS-B Notice */}
@@ -269,7 +396,7 @@ export function AircraftPanel({
         )}
 
         <div className="detail-disclaimer">
-          <p>Community ADS-B telemetry · Positions may be subject to latency.</p>
+          <p>Community ADS-B telemetry · Routes and schedules provided via Open Aviation Data.</p>
         </div>
       </div>
     </aside>

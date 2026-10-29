@@ -194,10 +194,24 @@ export function buildSafePopupContent(
   typeLine.textContent = `${aircraft.type || "Unknown Type"}${aircraft.model ? ` · ${aircraft.model}` : ""}`;
   container.appendChild(typeLine);
 
-  if (aircraft.operator) {
-    const opLine = document.createElement("p");
-    opLine.className = "popup-operator";
-    opLine.textContent = aircraft.operator;
+  const airlineName = aircraft.airline?.name || aircraft.operator;
+  if (airlineName) {
+    const opLine = document.createElement("div");
+    opLine.className = "popup-airline-badge";
+    if (aircraft.airline?.logoUrl) {
+      const logoImg = document.createElement("img");
+      logoImg.src = aircraft.airline.logoUrl;
+      logoImg.alt = "";
+      logoImg.className = "popup-airline-logo";
+      logoImg.addEventListener("error", () => {
+        logoImg.style.display = "none";
+      });
+      opLine.appendChild(logoImg);
+    }
+    const opName = document.createElement("span");
+    opName.className = "popup-operator";
+    opName.textContent = airlineName;
+    opLine.appendChild(opName);
     container.appendChild(opLine);
   }
 
