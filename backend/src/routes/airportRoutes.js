@@ -5,6 +5,7 @@ import {
   getAirportByIcaoHandler,
 } from "../controllers/airportController.js";
 import { getAirportAircraft } from "../controllers/aircraftController.js";
+import { getFlightRouteHandler } from "../controllers/flightRouteController.js";
 import {
   aircraftLimiter,
   airportSearchLimiter,
@@ -25,3 +26,5 @@ airportRoutes.get(
   aircraftLimiter,
   getAirportAircraft
 );
+airportRoutes.get("/routes/:callsign", aircraftLimiter, getFlightRouteHandler);
+

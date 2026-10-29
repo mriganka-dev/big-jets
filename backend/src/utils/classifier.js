@@ -5,6 +5,8 @@ import {
   PHASE_THRESHOLDS,
 } from "../constants.js";
 import { calculateDistanceKm } from "./geo.js";
+import { getAirlineByCallsign } from "./airlines.js";
+import { getModelNameByType } from "./aircraftModels.js";
 
 // Classify aircraft into categories based on type, registration and ADS-B flags
 export function classifyAircraft(type, reg, isMilitaryFlag) {
@@ -105,8 +107,17 @@ export function formatAircraft(raw, airport) {
   const rawFlight =
     typeof raw.flight === "string" ? raw.flight.trim().toUpperCase() : "";
   const callsign = /^[A-Z0-9]{1,8}$/.test(rawFlight) ? rawFlight : null;
-  const operator = typeof raw.ownOp === "string" ? raw.ownOp.trim() : "";
-  const model = typeof raw.desc === "string" ? raw.desc.trim() : null;
+  const airline = getAirlineByCallsign(callsign);
+  const operator =
+    typeof raw.ownOp === "string" && raw.ownOp.trim().length > 0
+      ? raw.ownOp.trim()
+      : airline
+      ? airline.name
+      : null;
+  const model =
+    typeof raw.desc === "string" && raw.desc.trim().length > 0
+      ? raw.desc.trim()
+      : getModelNameByType(type);
 
   let altFt = null;
   let onGround = false;
@@ -160,6 +171,15 @@ export function formatAircraft(raw, airport) {
     type: type || null,
     model,
     operator: operator || null,
+    airline: airline
+      ? {
+          name: airline.name,
+          iata: airline.iata,
+          icao: airline.icao,
+          country: airline.country,
+          logoUrl: airline.logoUrl,
+        }
+      : null,
     altFt,
     onGround,
     speedKt,
