@@ -3143,8 +3143,20 @@ label,
 
 .aircraft-callsign-group {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.aircraft-row-airline-logo {
+  height: 18px;
+  width: auto;
+  max-width: 44px;
+  object-fit: contain;
+  border-radius: 2px;
+  background: #ffffff;
+  padding: 1px 3px;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
 }
 
 .aircraft-callsign {

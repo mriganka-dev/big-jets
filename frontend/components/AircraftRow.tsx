@@ -26,7 +26,9 @@ export function AircraftRow({
   const modelDisplay = aircraft.model || aircraft.type || "Unknown Model";
   const callsignDisplay =
     aircraft.callsign?.trim() || aircraft.hex.toUpperCase();
-  const operatorDisplay = aircraft.operator?.trim() || null;
+  const airlineLogoUrl = aircraft.airline?.logoUrl || null;
+  const airlineName = aircraft.airline?.name || aircraft.operator?.trim() || null;
+  const operatorDisplay = airlineName;
   const phaseLabel =
     PHASE_LABELS[aircraft.phase as FlightPhaseKey] || aircraft.phase;
   const vRateFormatted = formatVerticalRate(aircraft.vRate);
@@ -57,6 +59,17 @@ export function AircraftRow({
     >
       <div className="aircraft-row-top">
         <div className="aircraft-callsign-group">
+          {airlineLogoUrl && (
+            <img
+              src={airlineLogoUrl}
+              alt=""
+              className="aircraft-row-airline-logo"
+              loading="lazy"
+              onError={(e) => {
+                (e.currentTarget as HTMLElement).style.display = "none";
+              }}
+            />
+          )}
           <span className="aircraft-callsign tabular-nums">
             {callsignDisplay}
           </span>

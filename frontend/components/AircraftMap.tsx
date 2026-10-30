@@ -47,7 +47,7 @@ export default function AircraftMap({
 
     const map = L.map(mapContainerRef.current, {
       center: [airport.lat, airport.lon],
-      zoom: 3,
+      zoom: 8,
       minZoom: 2,
       maxZoom: 18,
       maxBounds: [
@@ -78,7 +78,7 @@ export default function AircraftMap({
         L.DomEvent.disableClickPropagation(container);
         L.DomEvent.on(btn, "click", (e) => {
           L.DomEvent.preventDefault(e);
-          map.setView([airport.lat, airport.lon], 4, { animate: true });
+          map.setView([airport.lat, airport.lon], 8, { animate: true });
         });
         return container;
       },
@@ -151,7 +151,7 @@ export default function AircraftMap({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    map.panTo([airport.lat, airport.lon]);
+    map.setView([airport.lat, airport.lon], 8, { animate: true });
   }, [airport.lat, airport.lon]);
 
   // 3. Render Flight Route (Origin, Destination & Great-Circle Paths)
