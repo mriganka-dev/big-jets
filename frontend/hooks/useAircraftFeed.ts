@@ -19,11 +19,27 @@ interface UseAircraftFeedResult {
 export function useAircraftFeed(
   icao: string,
   options: AircraftQueryOptions,
+  initialData?: AircraftResponse | null,
 ): UseAircraftFeedResult {
-  const [data, setData] = useState<AircraftResponse | null>(null);
-  const [status, setStatus] = useState<FeedStatus>("loading");
+  const hasValidInitial =
+    initialData &&
+    initialData.airport?.icao === icao &&
+    Array.isArray(initialData.aircraft);
+
+  const [data, setData] = useState<AircraftResponse | null>(() =>
+    hasValidInitial ? initialData : null,
+  );
+  const [status, setStatus] = useState<FeedStatus>(() =>
+    hasValidInitial ? "success" : "loading",
+  );
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(() =>
+    hasValidInitial && initialData.updatedAt
+      ? new Date(initialData.updatedAt)
+      : hasValidInitial
+      ? new Date()
+      : null,
+  );
   const [isStale, setIsStale] = useState<boolean>(false);
 
   const radius = options.radius;
@@ -37,6 +53,7 @@ export function useAircraftFeed(
   const isFetchingRef = useRef<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const backoffDelayRef = useRef<number>(LIMITS.POLL_INTERVAL_MS);
+  const initialUsedRef = useRef<boolean>(!!hasValidInitial);
 
   // Stale checker effect (updates every 5 seconds)
   useEffect(() => {
@@ -137,7 +154,16 @@ export function useAircraftFeed(
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    runPollCycle();
+
+    // If initial data is fresh from SSR, schedule next cycle instead of immediate duplicate fetch
+    if (initialUsedRef.current) {
+      initialUsedRef.current = false;
+      timerRef.current = setTimeout(() => {
+        runPollCycle();
+      }, LIMITS.POLL_INTERVAL_MS);
+    } else {
+      runPollCycle();
+    }
 
     return () => {
       isMounted = false;

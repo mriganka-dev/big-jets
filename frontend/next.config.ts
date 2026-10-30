@@ -7,7 +7,7 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${!isProd ? " 'unsafe-eval'" : ""};
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' data: https://*.tile.openstreetmap.org;
+  img-src 'self' data: https://*.tile.openstreetmap.org https://images.kiwi.com https://pics.avs.io;
   font-src 'self' https://fonts.gstatic.com data:;
   connect-src 'self' ${apiUrl};
   frame-ancestors 'none';

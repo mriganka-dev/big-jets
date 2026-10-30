@@ -101,9 +101,10 @@ let globalInFlightPromise = null;
 
 async function fetchGlobalFeeds() {
   const now = Date.now();
+  const globalTtl = LIMITS.GLOBAL_FEEDS_CACHE_TTL_MS || 60000;
   if (
     globalFeedsCache.data.length > 0 &&
-    now - globalFeedsCache.timestamp < LIMITS.ADSB_CACHE_TTL_MS
+    now - globalFeedsCache.timestamp < globalTtl
   ) {
     return globalFeedsCache.data;
   }
@@ -113,28 +114,39 @@ async function fetchGlobalFeeds() {
 
   globalInFlightPromise = (async () => {
     try {
+      const primaryTimeout = LIMITS.PRIMARY_FETCH_TIMEOUT_MS || 4000;
       const endpoints = ["mil", "ladd", "pia"];
       const results = await Promise.allSettled(
         endpoints.map(async (ep) => {
           let url = `${config.adsbApi}/${ep}`;
-          let res = await fetch(url, {
-            headers: {
-              Accept: "application/json",
-              "User-Agent": "BigJetsAlert/1.0 (contact: info@bigjets.local)",
-            },
-            signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
-          });
-          if (!res.ok && (res.status === 429 || res.status >= 500)) {
-            url = `https://opendata.adsb.fi/api/v2/${ep}`;
+          let res = null;
+          try {
             res = await fetch(url, {
               headers: {
                 Accept: "application/json",
                 "User-Agent": "BigJetsAlert/1.0 (contact: info@bigjets.local)",
               },
-              signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
+              signal: AbortSignal.timeout(primaryTimeout),
             });
+          } catch {
+            // Primary network error or timeout, will fallback below
           }
-          if (!res.ok) return [];
+
+          if (!res || !res.ok && (res.status === 429 || res.status >= 500)) {
+            url = `https://opendata.adsb.fi/api/v2/${ep}`;
+            try {
+              res = await fetch(url, {
+                headers: {
+                  Accept: "application/json",
+                  "User-Agent": "BigJetsAlert/1.0 (contact: info@bigjets.local)",
+                },
+                signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
+              });
+            } catch {
+              return [];
+            }
+          }
+          if (!res || !res.ok) return [];
           const json = await res.json();
           return Array.isArray(json?.ac)
             ? json.ac
@@ -193,18 +205,30 @@ async function performUpstreamFetch(airport, roundedRadius, cacheKey) {
   const fallbackUrl = `https://opendata.adsb.fi/api/v2/lat/${lat}/lon/${lon}/dist/${roundedRadius}`;
 
   try {
-    let res = await fetch(primaryUrl, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "BigJetsAlert/1.0",
-      },
-      redirect: "error",
-      signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
-    });
+    let res = null;
+    let json = null;
 
-    if (!res.ok && (res.status === 429 || res.status >= 500)) {
+    // Fetch from primary (adsb.lol) and fallback (adsb.fi)
+    const primaryTimeout = LIMITS.PRIMARY_FETCH_TIMEOUT_MS || 4000;
+    try {
+      res = await fetch(primaryUrl, {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "BigJetsAlert/1.0",
+        },
+        redirect: "error",
+        signal: AbortSignal.timeout(primaryTimeout),
+      });
+      if (res.ok) {
+        json = await res.json();
+      }
+    } catch {
+      // Ignore primary network error, fallback will be attempted
+    }
+
+    if (!json || (!res?.ok && (res?.status === 429 || res?.status >= 500))) {
       logger.warn(
-        `Primary ADS-B provider returned HTTP ${res.status}, attempting fallback to secondary mirror...`
+        `Primary ADS-B provider returned HTTP ${res?.status || "error"}, attempting fallback to secondary mirror...`
       );
       res = await fetch(fallbackUrl, {
         headers: {
@@ -214,13 +238,13 @@ async function performUpstreamFetch(airport, roundedRadius, cacheKey) {
         redirect: "error",
         signal: AbortSignal.timeout(LIMITS.FETCH_TIMEOUT_MS),
       });
+
+      if (!res.ok) {
+        throw new Error(`ADS-B provider returned HTTP ${res.status}`);
+      }
+      json = await res.json();
     }
 
-    if (!res.ok) {
-      throw new Error(`ADS-B provider returned HTTP ${res.status}`);
-    }
-
-    const json = await res.json();
     const rawAcList = Array.isArray(json?.ac)
       ? json.ac
       : Array.isArray(json?.aircraft)

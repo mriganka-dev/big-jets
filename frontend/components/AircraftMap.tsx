@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { AirportItem, AircraftItem, FlightRouteInfo } from "@/lib/schemas";
@@ -15,6 +15,7 @@ import { getGreatCirclePoints } from "@/lib/geo";
 
 interface AircraftMapProps {
   airport: AirportItem;
+  allAirports?: AirportItem[];
   aircraft: AircraftItem[];
   radiusNm?: number;
   selectedHex?: string | null;
@@ -26,6 +27,7 @@ interface AircraftMapProps {
 
 export default function AircraftMap({
   airport,
+  allAirports,
   aircraft,
   selectedHex,
   selectedRoute,
@@ -38,6 +40,7 @@ export default function AircraftMap({
   const trailsMapRef = useRef<Map<string, [number, number][]>>(new Map());
   const trailsLayerRef = useRef<L.LayerGroup | null>(null);
   const routeLayerRef = useRef<L.LayerGroup | null>(null);
+  const airportsLayerRef = useRef<L.LayerGroup | null>(null);
 
   // 1. Initialize Map instance (open global navigation)
   useEffect(() => {
@@ -47,7 +50,7 @@ export default function AircraftMap({
 
     const map = L.map(mapContainerRef.current, {
       center: [airport.lat, airport.lon],
-      zoom: 3,
+      zoom: 8,
       minZoom: 2,
       maxZoom: 18,
       maxBounds: [
@@ -78,7 +81,7 @@ export default function AircraftMap({
         L.DomEvent.disableClickPropagation(container);
         L.DomEvent.on(btn, "click", (e) => {
           L.DomEvent.preventDefault(e);
-          map.setView([airport.lat, airport.lon], 4, { animate: true });
+          map.setView([airport.lat, airport.lon], 8, { animate: true });
         });
         return container;
       },
@@ -100,41 +103,23 @@ export default function AircraftMap({
     const routeLayer = L.layerGroup().addTo(map);
     routeLayerRef.current = routeLayer;
 
-    // Airport Center Blip
-    const airportIcon = L.divIcon({
-      className: "radar-airport-marker-container",
-      html: `<div class="airport-center-blip" title="${airport.name} (${airport.icao})"><span class="blip-dot"></span><span class="blip-pulse"></span></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    });
-
-    const airportMarker = L.marker([airport.lat, airport.lon], {
-      icon: airportIcon,
-      zIndexOffset: 500,
-    }).addTo(map);
-
-    const airportPopup = document.createElement("div");
-    airportPopup.className = "airport-center-popup";
-    const airportTitle = document.createElement("strong");
-    airportTitle.textContent = `${airport.name} (${airport.icao})`;
-    airportPopup.appendChild(airportTitle);
-    const airportDesc = document.createElement("div");
-    airportDesc.textContent = airport.city
-      ? `${airport.city}, ${airport.country}`
-      : airport.country;
-    airportPopup.appendChild(airportDesc);
-    airportMarker.bindPopup(airportPopup);
+    // Airports & Air Bases layer
+    const airportsLayer = L.layerGroup().addTo(map);
+    airportsLayerRef.current = airportsLayer;
 
     mapInstanceRef.current = map;
+    (window as unknown as { __radarMap?: L.Map }).__radarMap = map;
 
     const markersMap = markersMapRef.current;
     const trailsMap = trailsMapRef.current;
 
     return () => {
+      delete (window as unknown as { __radarMap?: L.Map }).__radarMap;
       map.remove();
       mapInstanceRef.current = null;
       trailsLayerRef.current = null;
       routeLayerRef.current = null;
+      airportsLayerRef.current = null;
       markersMap.clear();
       trailsMap.clear();
     };
@@ -147,11 +132,60 @@ export default function AircraftMap({
     airport.country,
   ]);
 
+  // 2. Render Airport & Air Base Blips (Current airport highlighted, others visible when zoomed out)
+  useEffect(() => {
+    const airportsLayer = airportsLayerRef.current;
+    if (!airportsLayer) return;
+
+    airportsLayer.clearLayers();
+
+    const airportsToRender =
+      allAirports && allAirports.length > 0 ? allAirports : [airport];
+
+    for (const ap of airportsToRender) {
+      const isCurrent = ap.icao === airport.icao;
+      const airportIcon = L.divIcon({
+        className: "radar-airport-marker-container",
+        html: `<div class="airport-center-blip ${isCurrent ? "is-active" : "is-secondary"}" title="${ap.name} (${ap.icao})"><span class="blip-dot"></span><span class="blip-pulse"></span></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const airportMarker = L.marker([ap.lat, ap.lon], {
+        icon: airportIcon,
+        zIndexOffset: isCurrent ? 500 : 400,
+      }).addTo(airportsLayer);
+
+      const airportPopup = document.createElement("div");
+      airportPopup.className = "airport-center-popup";
+      const airportTitle = document.createElement("strong");
+      airportTitle.textContent = `${ap.name} (${ap.icao})`;
+      airportPopup.appendChild(airportTitle);
+      const airportDesc = document.createElement("div");
+      airportDesc.textContent = ap.city
+        ? `${ap.city}, ${ap.country}`
+        : ap.country;
+      airportPopup.appendChild(airportDesc);
+
+      if (!isCurrent) {
+        const jumpLink = document.createElement("a");
+        jumpLink.href = `/airport/${ap.icao}`;
+        jumpLink.className = "btn btn-xs btn-primary";
+        jumpLink.style.display = "inline-block";
+        jumpLink.style.marginTop = "6px";
+        jumpLink.textContent = "Switch to Radar";
+        airportPopup.appendChild(jumpLink);
+      }
+
+      airportMarker.bindPopup(airportPopup);
+    }
+  }, [airport, allAirports]);
+
   // 2. Pan to airport when selected airport changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    map.panTo([airport.lat, airport.lon]);
+    map.setView([airport.lat, airport.lon], 8, { animate: true });
   }, [airport.lat, airport.lon]);
 
   // 3. Render Flight Route (Origin, Destination & Great-Circle Paths)

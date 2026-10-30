@@ -3143,8 +3143,20 @@ label,
 
 .aircraft-callsign-group {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.aircraft-row-airline-logo {
+  height: 18px;
+  width: auto;
+  max-width: 44px;
+  object-fit: contain;
+  border-radius: 2px;
+  background: #ffffff;
+  padding: 1px 3px;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
 }
 
 .aircraft-callsign {
@@ -3403,6 +3415,11 @@ label,
   box-shadow: 0 0 8px rgba(217, 119, 6, 0.8);
 }
 
+.airport-center-blip.is-secondary .blip-dot {
+  background-color: #64748b;
+  box-shadow: 0 0 6px rgba(100, 116, 139, 0.6);
+}
+
 .blip-pulse {
   position: absolute;
   inset: 0;
@@ -3410,6 +3427,11 @@ label,
   border-radius: 50%;
   opacity: 0.6;
   animation: pulseAirportRadar 2.5s infinite ease-out;
+}
+
+.airport-center-blip.is-secondary .blip-pulse {
+  border-color: #64748b;
+  opacity: 0.3;
 }
 
 @keyframes pulseAirportRadar {

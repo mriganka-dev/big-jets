@@ -4,7 +4,7 @@ import { useState, useMemo, Suspense, useCallback, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import type { AirportItem, FlightRouteInfo } from "@/lib/schemas";
+import type { AirportItem, AircraftResponse, FlightRouteInfo } from "@/lib/schemas";
 import { fetchFlightRoute } from "@/lib/api";
 import { useAircraftFeed } from "@/hooks/useAircraftFeed";
 import { AirportSearch } from "./AirportSearch";
@@ -40,9 +40,10 @@ const AircraftMap = dynamic(() => import("./AircraftMap"), {
 interface RadarViewProps {
   airport: AirportItem;
   allAirports: AirportItem[];
+  initialAircraft?: AircraftResponse | null;
 }
 
-function RadarViewInner({ airport, allAirports }: RadarViewProps) {
+function RadarViewInner({ airport, allAirports, initialAircraft }: RadarViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -77,9 +78,13 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
   // Connect live data feed (15s polling, tab visibility pause, error backoff)
   // Request all=true from backend; client narrows by category
   const { data, status, error, lastUpdated, isStale, refresh } =
-    useAircraftFeed(airport.icao, {
-      all: true,
-    });
+    useAircraftFeed(
+      airport.icao,
+      {
+        all: true,
+      },
+      initialAircraft,
+    );
 
   const allAircraft = useMemo(() => data?.aircraft ?? [], [data]);
 
@@ -89,7 +94,14 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
       return allAircraft;
     }
     return allAircraft.filter((ac) =>
-      ac.categories.some((cat) => selectedCategories.includes(cat)),
+      ac.categories.some((cat) => {
+        if (selectedCategories.includes(CATEGORIES.MIL_FIGHTER)) {
+          if (cat === CATEGORIES.MIL_FIGHTER || cat === CATEGORIES.MIL_OTHER) {
+            return true;
+          }
+        }
+        return selectedCategories.includes(cat);
+      }),
     );
   }, [allAircraft, showAllTraffic, selectedCategories]);
 
@@ -103,25 +115,28 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
 
   // Fetch flight route whenever selected aircraft callsign changes
   useEffect(() => {
-    if (!selectedAircraft?.callsign) {
-      setSelectedRoute(null);
-      return;
-    }
-
     let active = true;
     const controller = new AbortController();
 
-    fetchFlightRoute(selectedAircraft.callsign, controller.signal)
-      .then((route) => {
-        if (active) {
-          setSelectedRoute(route);
-        }
-      })
-      .catch(() => {
+    if (selectedAircraft?.callsign) {
+      fetchFlightRoute(selectedAircraft.callsign, controller.signal)
+        .then((route) => {
+          if (active) {
+            setSelectedRoute(route);
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setSelectedRoute(null);
+          }
+        });
+    } else {
+      Promise.resolve().then(() => {
         if (active) {
           setSelectedRoute(null);
         }
       });
+    }
 
     return () => {
       active = false;
@@ -216,6 +231,7 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
         ) : (
           <AircraftMap
             airport={airport}
+            allAirports={allAirports}
             aircraft={filteredAircraft}
             selectedHex={selectedHex}
             selectedRoute={selectedRoute}
@@ -254,12 +270,16 @@ function RadarViewInner({ airport, allAirports }: RadarViewProps) {
         {/* Top-Right: Live Traffic Pill + Get Alerts + List Button */}
         <div className="controls-right">
           <div
-            className="fr24-live-flights-pill"
+            className={`fr24-live-flights-pill ${status === "loading" && filteredAircraft.length === 0 ? "is-loading" : ""}`}
             title="Global aircraft currently tracked"
             aria-label={`${filteredAircraft.length} live flights tracked`}
           >
             <span className="fr24-live-beacon" aria-hidden="true" />
-            <span className="fr24-live-count tabular-nums">{filteredAircraft.length}</span>
+            <span className="fr24-live-count tabular-nums">
+              {status === "loading" && filteredAircraft.length === 0
+                ? "..."
+                : filteredAircraft.length}
+            </span>
             <span className="fr24-live-label">TRACKED</span>
           </div>
 

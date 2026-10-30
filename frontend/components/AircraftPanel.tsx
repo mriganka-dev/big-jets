@@ -32,11 +32,14 @@ export function AircraftPanel({
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [prevKey, setPrevKey] = useState("");
 
-  // Reset logo failure on route/hex change
-  useEffect(() => {
+  // Reset logo failure on route/hex change during render without triggering effect cascaded renders
+  const currentKey = `${route?.callsign || ""}_${selectedHex || ""}`;
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey);
     setLogoFailed(false);
-  }, [route?.callsign, selectedHex]);
+  }
 
   // Close on Escape key
   useEffect(() => {
@@ -113,13 +116,31 @@ export function AircraftPanel({
 
   // Origin & Destination details
   const hasFullRoute = Boolean(route?.origin && route?.destination);
-  const originIata = route?.origin?.iata || route?.origin?.icao || (aircraft?.onGround ? "GND" : "AIR");
-  const originCity = route?.origin?.city || route?.origin?.name || (aircraft?.onGround ? "On Ground" : "Airborne");
-  const originAirportName = route?.origin?.name || "";
+  const originIata =
+    route?.origin?.iata ||
+    route?.origin?.icao ||
+    (aircraft?.onGround ? "GND" : "AIR");
+  const originCity =
+    route?.origin?.city ||
+    route?.origin?.name ||
+    (aircraft?.onGround ? "On Ground" : "Airborne");
+  const originAirportName =
+    route?.origin?.name && route?.origin?.name !== originCity
+      ? route.origin.name
+      : route?.origin?.country || "";
 
-  const destIata = route?.destination?.iata || route?.destination?.icao || (eta ? "ARR" : "FLT");
-  const destCity = route?.destination?.city || route?.destination?.name || (eta ? `ETA ${eta}` : "In Flight");
-  const destAirportName = route?.destination?.name || "";
+  const destIata =
+    route?.destination?.iata ||
+    route?.destination?.icao ||
+    (eta ? "ARR" : "FLT");
+  const destCity =
+    route?.destination?.city ||
+    route?.destination?.name ||
+    (eta ? `ETA ${eta}` : "In Flight");
+  const destAirportName =
+    route?.destination?.name && route?.destination?.name !== destCity
+      ? route.destination.name
+      : route?.destination?.country || "";
 
   // Dynamic Flight Progress Calculation
   let progressPercent = 50;
@@ -228,10 +249,10 @@ export function AircraftPanel({
         <div className="detail-section fr24-route-card">
           <div className="fr24-route-row">
             {/* Origin */}
-            <div className="fr24-route-node" title={originAirportName}>
+            <div className="fr24-route-node" title={originAirportName || originCity}>
               <span className="fr24-node-code">{originIata}</span>
               <span className="fr24-node-city">{originCity}</span>
-              {originAirportName && originAirportName !== originCity && (
+              {originAirportName && (
                 <span className="fr24-node-sub">{originAirportName}</span>
               )}
             </div>
@@ -255,10 +276,10 @@ export function AircraftPanel({
             </div>
 
             {/* Destination */}
-            <div className="fr24-route-node fr24-node-right" title={destAirportName}>
+            <div className="fr24-route-node fr24-node-right" title={destAirportName || destCity}>
               <span className="fr24-node-code">{destIata}</span>
               <span className="fr24-node-city">{destCity}</span>
-              {destAirportName && destAirportName !== destCity && (
+              {destAirportName && (
                 <span className="fr24-node-sub">{destAirportName}</span>
               )}
             </div>
