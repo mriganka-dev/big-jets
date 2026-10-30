@@ -32,11 +32,14 @@ export function AircraftPanel({
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [prevKey, setPrevKey] = useState("");
 
-  // Reset logo failure on route/hex change
-  useEffect(() => {
+  // Reset logo failure on route/hex change during render without triggering effect cascaded renders
+  const currentKey = `${route?.callsign || ""}_${selectedHex || ""}`;
+  if (prevKey !== currentKey) {
+    setPrevKey(currentKey);
     setLogoFailed(false);
-  }, [route?.callsign, selectedHex]);
+  }
 
   // Close on Escape key
   useEffect(() => {

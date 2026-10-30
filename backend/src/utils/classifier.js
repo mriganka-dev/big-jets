@@ -138,8 +138,22 @@ export function formatAircraft(raw, airport) {
         ? Math.round(raw.geom_rate)
         : 0;
   const track = typeof raw.track === "number" ? Math.round(raw.track) : null;
-  const lat = typeof raw.lat === "number" ? raw.lat : null;
-  const lon = typeof raw.lon === "number" ? raw.lon : null;
+  const lat =
+    typeof raw.lat === "number"
+      ? raw.lat
+      : typeof raw.lastPosition?.lat === "number"
+      ? raw.lastPosition.lat
+      : typeof raw.rr_lat === "number"
+      ? raw.rr_lat
+      : null;
+  const lon =
+    typeof raw.lon === "number"
+      ? raw.lon
+      : typeof raw.lastPosition?.lon === "number"
+      ? raw.lastPosition.lon
+      : typeof raw.rr_lon === "number"
+      ? raw.rr_lon
+      : null;
 
   let distKm = null;
   if (

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { fetchAirports, fetchAirport, ApiError } from "@/lib/api";
+import { fetchAirports, fetchAirport, fetchAircraft, ApiError } from "@/lib/api";
 import { DEFAULT_AIRPORT_ICAO } from "@/lib/constants";
 import { RadarView } from "@/components/RadarView";
-import type { AirportItem } from "@/lib/schemas";
+import type { AirportItem, AircraftResponse } from "@/lib/schemas";
 
-// Revalidate airport cache periodically
-export const revalidate = 300;
+// Dynamic rendering ensures fresh live aircraft positions on page load
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -77,5 +77,19 @@ export default async function HomePage() {
     targetAirport = airports[0];
   }
 
-  return <RadarView airport={targetAirport} allAirports={airports} />;
+  // Pre-fetch initial aircraft on the server so aircraft appear immediately on initial load
+  let initialAircraft: AircraftResponse | null = null;
+  try {
+    initialAircraft = await fetchAircraft(targetAirport.icao, { all: true });
+  } catch {
+    initialAircraft = null;
+  }
+
+  return (
+    <RadarView
+      airport={targetAirport}
+      allAirports={airports}
+      initialAircraft={initialAircraft}
+    />
+  );
 }

@@ -36,31 +36,33 @@ export async function getAirportAircraft(req, res, next) {
     if (!airport) {
       return res.status(404).json({ error: "Airport not found" });
     }
-    const airportAircraft = await fetchAircraftForAirport(airport, radius);
+
+    // Fetch airport regional aircraft and global feeds concurrently
+    const [airportAircraft, globalRaw] = await Promise.all([
+      fetchAircraftForAirport(airport, radius),
+      fetchGlobalFeeds().catch(() => []),
+    ]);
+
     const aircraftList = [...airportAircraft];
 
-    try {
-      const globalRaw = await fetchGlobalFeeds();
+    // Merge global feeds (military fighters, bombers, transports, VIP and special aircraft across world air bases)
+    if (Array.isArray(globalRaw) && globalRaw.length > 0) {
       const seenHexes = new Set(airportAircraft.map((a) => a.hex.toLowerCase()));
       for (const raw of globalRaw) {
-        if (
-          !raw ||
-          typeof raw !== "object" ||
-          !raw.hex ||
-          typeof raw.lat !== "number" ||
-          typeof raw.lon !== "number"
-        ) {
+        if (!raw || typeof raw !== "object" || !raw.hex) {
           continue;
         }
         const hexLower = raw.hex.toLowerCase();
         if (seenHexes.has(hexLower)) {
           continue;
         }
-        seenHexes.add(hexLower);
-        aircraftList.push(formatAircraft(raw, airport));
+        const formatted = formatAircraft(raw, airport);
+        // Include aircraft with valid coordinates anywhere in the world
+        if (typeof formatted.lat === "number" && typeof formatted.lon === "number") {
+          seenHexes.add(hexLower);
+          aircraftList.push(formatted);
+        }
       }
-    } catch {
-      // Continue with airportAircraft if global feeds encounter transient issues
     }
 
     let filtered = aircraftList;

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchAirport, fetchAirports, ApiError } from "@/lib/api";
+import { fetchAirport, fetchAirports, fetchAircraft, ApiError } from "@/lib/api";
 import { PATTERNS } from "@/lib/constants";
 import { RadarView } from "@/components/RadarView";
-import type { AirportItem } from "@/lib/schemas";
+import type { AirportItem, AircraftResponse } from "@/lib/schemas";
+
+export const dynamic = "force-dynamic";
 
 interface AirportPageProps {
   params: Promise<{ icao: string }>;
@@ -93,5 +95,19 @@ export default async function AirportPage({ params }: AirportPageProps) {
     );
   }
 
-  return <RadarView airport={airport} allAirports={featuredAirports} />;
+  // Pre-fetch initial aircraft on the server so the map renders with live traffic immediately
+  let initialAircraft: AircraftResponse | null = null;
+  try {
+    initialAircraft = await fetchAircraft(cleanIcao, { all: true });
+  } catch {
+    initialAircraft = null;
+  }
+
+  return (
+    <RadarView
+      airport={airport}
+      allAirports={featuredAirports}
+      initialAircraft={initialAircraft}
+    />
+  );
 }
